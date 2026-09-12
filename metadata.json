@@ -1,0 +1,10 @@
+{
+  "name": "HeatShield AI",
+  "description": "National Heat Health Early Warning System & Biometeorological Public Safety Portal",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

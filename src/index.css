@@ -1,0 +1,223 @@
+@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&family=Public+Sans:wght@500;600;700;800&display=swap");
+
+:root {
+  --font-display: "Public Sans", system-ui, -apple-system, sans-serif;
+  --font-body: "Noto Sans", system-ui, -apple-system, sans-serif;
+  --font-data: "IBM Plex Sans", "IBM Plex Mono", monospace;
+
+  /* Official Government Palette */
+  --gov-navy: #0B1F3A;
+  --official-blue: #135A9C;
+  --clean-bg: #F5F8FB;
+  --text-charcoal: #17202A;
+  --text-slate: #526273;
+  --border-pale: #D9E2EC;
+  --heat-amber: #F4A62A;
+
+  /* Heat Risk Standard Palette */
+  --risk-minimal: #16804A;
+  --risk-moderate: #E5A400;
+  --risk-high: #E87500;
+  --risk-very-high: #C7352B;
+  --risk-extreme: #7A1F2B;
+
+  --shadow-subtle: 0 1px 3px rgba(11, 31, 58, 0.06), 0 1px 2px rgba(11, 31, 58, 0.04);
+  --shadow-card: 0 2px 4px rgba(11, 31, 58, 0.06);
+}
+
+@layer base {
+  body {
+    font-family: var(--font-body);
+    font-weight: 400;
+    line-height: 1.5;
+    background-color: var(--clean-bg);
+    color: var(--text-charcoal);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font-family: var(--font-body);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .brand-name,
+  .display-text,
+  .font-headline,
+  .font-display {
+    font-family: var(--font-display);
+    line-height: 1.2;
+  }
+
+  .data-value,
+  .timestamp,
+  .coordinate,
+  .sensor-id,
+  .model-output {
+    font-family: var(--font-data);
+  }
+
+  /* Clean institutional scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #F5F8FB;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
+  }
+}
+
+/* Typography Utility Classes */
+.font-sans, .font-body {
+  font-family: var(--font-body) !important;
+}
+
+.font-headline, .font-display {
+  font-family: var(--font-display) !important;
+}
+
+.font-mono, .font-numeric, .font-data {
+  font-family: var(--font-data) !important;
+}
+
+.data-grid,
+.forecast-values {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Institutional Standard Card */
+.gov-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-pale);
+  border-radius: 8px;
+  box-shadow: var(--shadow-subtle);
+  transition: border-color 0.15s ease;
+}
+
+.gov-card:hover {
+  border-color: #B5C6D8;
+}
+
+.gov-card.gov-card-dark,
+.gov-card[class*="bg-[#0B1F3A]"],
+.gov-card[class*="bg-navy"] {
+  background-color: #0B1F3A !important;
+  color: #FFFFFF !important;
+  border: 1px solid #135A9C !important;
+}
+
+.gov-card-dark {
+  background-color: #0B1F3A !important;
+  color: #FFFFFF !important;
+  border: 1px solid #135A9C !important;
+  border-radius: 8px;
+  box-shadow: var(--shadow-subtle);
+}
+
+/* High Contrast Mode */
+.high-contrast {
+  --clean-bg: #FFFFFF;
+  --text-charcoal: #000000;
+  --text-slate: #17202A;
+  --border-pale: #0B1F3A;
+  color: #000000 !important;
+}
+
+.high-contrast .gov-card {
+  border: 2px solid #0B1F3A !important;
+}
+
+/* Subtle Topographic / Geographic Grid Pattern for Hero */
+.topo-pattern {
+  background-color: #F5F8FB;
+  background-image: radial-gradient(#D9E2EC 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Clean accessible Leaflet map */
+.leaflet-container {
+  background-color: #E8EEF5;
+  font-family: var(--font-body) !important;
+}
+
+#nasa-satellite-thermal-widget .leaflet-container {
+  background-color: #060E20 !important;
+}
+
+/* Tactical dark map tiles filter */
+.dark-tactical-tiles {
+  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7) !important;
+}
+
+.leaflet-tactical-tooltip {
+  background: #0B1F3A !important;
+  border: 1px solid #D9E2EC !important;
+  color: #FFFFFF !important;
+  border-radius: 4px !important;
+  font-family: var(--font-body) !important;
+  font-size: 12px !important;
+  box-shadow: 0 2px 6px rgba(11, 31, 58, 0.15) !important;
+}
+
+/* Utility to hide scrollbars cleanly */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Dedicated Print / PDF Media Styles */
+@media print {
+  body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+  }
+  
+  header,
+  footer,
+  aside,
+  nav,
+  #government-portal-footer,
+  #national-safety-header,
+  #rolling-ticker-bar,
+  .print\\:hidden,
+  button:not(.print-keep) {
+    display: none !important;
+  }
+
+  .print-area {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Force clean black/white high-contrast readability */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
