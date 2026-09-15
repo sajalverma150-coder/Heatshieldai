@@ -35,7 +35,7 @@ export const HealthReportModal: React.FC<HealthReportModalProps> = ({
   return (
     <div 
       id="health-report-modal"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-[#12304A]/80 backdrop-blur-sm overflow-y-auto"
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 bg-[#12304A]/80 backdrop-blur-sm overflow-y-auto"
     >
       <div 
         className="relative w-full max-w-5xl my-auto bg-white border-2 border-[#1E5A7A] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]"

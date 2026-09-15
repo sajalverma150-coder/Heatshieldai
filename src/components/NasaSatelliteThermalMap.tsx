@@ -465,6 +465,24 @@ export const NasaSatelliteThermalMap: React.FC<NasaSatelliteThermalMapProps> = (
     mapInstanceRef.current.flyTo([city.lat, city.lng], 11, { duration: 0.8 });
   };
 
+  // Lock document body scroll when fullscreen is active and invalidate Leaflet size
+  useEffect(() => {
+    if (isFullscreen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    const timer = setTimeout(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
+    }, 150);
+    return () => {
+      document.body.style.overflow = '';
+      clearTimeout(timer);
+    };
+  }, [isFullscreen]);
+
   // Clean up on component unmount
   useEffect(() => {
     return () => {
@@ -478,12 +496,14 @@ export const NasaSatelliteThermalMap: React.FC<NasaSatelliteThermalMapProps> = (
   return (
     <div 
       id="nasa-satellite-thermal-widget" 
-      className={`relative rounded-2xl border border-[#1e293b] bg-[#070e1d] overflow-hidden flex flex-col justify-between transition-all ${
-        isFullscreen ? 'fixed inset-4 z-50 shadow-2xl bg-[#070e1d]' : 'w-full'
+      className={`rounded-2xl border border-[#1e293b] bg-[#070e1d] flex flex-col justify-between transition-all ${
+        isFullscreen 
+          ? 'fixed inset-0 z-[9999] bg-[#070e1d] p-4 sm:p-6 overflow-y-auto h-screen w-screen shadow-2xl' 
+          : 'relative w-full overflow-hidden'
       }`}
     >
       {/* Top Header & Satellite Sensor Metadata */}
-      <div className="p-4 sm:p-5 border-b border-[#1e293b] bg-[#070e1d] flex flex-col gap-3">
+      <div className="p-4 sm:p-5 border-b border-[#1e293b] bg-[#070e1d] flex flex-col gap-3 shrink-0">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-2.5">
             <Layers className="w-5 h-5 text-orange-400 mt-0.5 shrink-0" />
@@ -498,8 +518,19 @@ export const NasaSatelliteThermalMap: React.FC<NasaSatelliteThermalMapProps> = (
           </div>
 
           {/* TERRA / AQUA Badge */}
-          <div className="px-2.5 py-1 rounded bg-[#082f49]/60 text-cyan-400 border border-cyan-700/60 font-mono text-[11px] font-bold tracking-wider shrink-0 text-center">
-            TERRA / AQUA
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="px-2.5 py-1 rounded bg-[#082f49]/60 text-cyan-400 border border-cyan-700/60 font-mono text-[11px] font-bold tracking-wider text-center">
+              TERRA / AQUA
+            </div>
+            {isFullscreen && (
+              <button
+                onClick={() => setIsFullscreen(false)}
+                className="p-1.5 rounded-lg bg-red-950/80 hover:bg-red-900 text-red-300 border border-red-700/80 transition-colors cursor-pointer"
+                title="Exit Fullscreen"
+              >
+                <Minimize2 className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -520,20 +551,27 @@ export const NasaSatelliteThermalMap: React.FC<NasaSatelliteThermalMapProps> = (
           </div>
 
           <button
-            onClick={() => {
-              setIsFullscreen(!isFullscreen);
-              setTimeout(() => mapInstanceRef.current?.invalidateSize(), 100);
-            }}
-            className="p-2 rounded-lg bg-[#111827] hover:bg-[#1f2937] text-slate-300 border border-slate-700 transition-colors ml-1 mt-3"
+            onClick={() => setIsFullscreen(!isFullscreen)}
+            className="p-2 rounded-lg bg-[#111827] hover:bg-[#1f2937] text-slate-300 border border-slate-700 transition-colors ml-auto cursor-pointer flex items-center gap-1.5 text-xs font-mono"
             title={isFullscreen ? 'Exit Fullscreen' : 'Expand Fullscreen'}
           >
-            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            {isFullscreen ? (
+              <>
+                <Minimize2 className="w-4 h-4 text-orange-400" />
+                <span className="hidden sm:inline">Exit Fullscreen</span>
+              </>
+            ) : (
+              <>
+                <Maximize2 className="w-4 h-4 text-orange-400" />
+                <span className="hidden sm:inline">Expand Fullscreen</span>
+              </>
+            )}
           </button>
         </div>
       </div>
 
       {/* Map Stage */}
-      <div className="relative w-full h-80 sm:h-96 lg:h-[420px] bg-[#070e1d]">
+      <div className={`relative w-full bg-[#070e1d] transition-all shrink-0 ${isFullscreen ? 'h-[calc(100vh-320px)] min-h-[380px] my-2 rounded-xl overflow-hidden' : 'h-80 sm:h-96 lg:h-[420px]'}`}>
         <div 
           ref={mapContainerRef} 
           className="w-full h-full z-0 cursor-grab active:cursor-grabbing bg-[#070e1d]"

@@ -5,14 +5,12 @@ import {
   Droplet, 
   X, 
   Check, 
-  Zap, 
-  AlertTriangle, 
-  ShieldCheck,
-  Volume2
+  ShieldCheck
 } from 'lucide-react';
 import { 
   PushNotificationPayload, 
-  subscribeToPushNotifications 
+  subscribeToPushNotifications,
+  playNotificationChime
 } from '../services/hydrationNotificationService';
 
 interface PushNotificationBannerProps {
@@ -29,13 +27,15 @@ export const PushNotificationBanner: React.FC<PushNotificationBannerProps> = ({
   useEffect(() => {
     const unsubscribe = subscribeToPushNotifications((payload) => {
       setActiveNotification(payload);
+      playNotificationChime();
 
-      // Auto-dismiss after 10 seconds
-      const timer = setTimeout(() => {
-        setActiveNotification((current) => (current?.id && payload?.id && current.id === payload.id ? null : current));
-      }, 10000);
-
-      return () => clearTimeout(timer);
+      // Only auto-dismiss non-critical alerts after 12 seconds; critical heat alerts stay until actioned or dismissed
+      if (payload.severity !== 'CRITICAL' && payload.type !== 'heatwave') {
+        const timer = setTimeout(() => {
+          setActiveNotification((current) => (current?.id && payload?.id && current.id === payload.id ? null : current));
+        }, 12000);
+        return () => clearTimeout(timer);
+      }
     });
 
     return unsubscribe;
@@ -64,39 +64,39 @@ export const PushNotificationBanner: React.FC<PushNotificationBannerProps> = ({
     <div 
       id="in-app-push-notification-banner"
       role="alert"
-      className="fixed top-3 right-3 sm:top-4 sm:right-6 z-[9999] max-w-md w-[calc(100vw-1.5rem)] animate-in slide-in-from-top-6 duration-300 pointer-events-auto"
+      className="fixed top-4 right-3 sm:right-6 z-[9999] max-w-md w-[calc(100vw-1.5rem)] animate-in slide-in-from-top-6 duration-300 pointer-events-auto"
     >
-      <div className={`p-4 rounded-2xl shadow-2xl border backdrop-blur-xl relative overflow-hidden transition-all ${
+      <div className={`p-4 sm:p-5 rounded-2xl shadow-2xl border backdrop-blur-2xl relative overflow-hidden transition-all ${
         isCritical 
-          ? 'bg-[#1a080d]/95 border-red-500/70 text-white shadow-red-950/60' 
+          ? 'bg-[#180408]/98 border-red-500 text-white ring-4 ring-red-500/40 shadow-red-950/80 animate-pulse' 
           : isSuccess
-          ? 'bg-[#061912]/95 border-emerald-500/70 text-white shadow-emerald-950/60'
-          : 'bg-[#141008]/95 border-amber-500/70 text-white shadow-amber-950/60'
+          ? 'bg-[#04160f]/98 border-emerald-500 text-white ring-2 ring-emerald-500/30 shadow-emerald-950/70'
+          : 'bg-[#140f06]/98 border-amber-500 text-white ring-2 ring-amber-500/30 shadow-amber-950/70'
       }`}>
         
         {/* Top Header Tag */}
         <div className="flex items-start justify-between gap-3 mb-2">
           <div className="flex items-center gap-2">
-            <div className={`p-1.5 rounded-xl border ${
-              isCritical ? 'bg-red-500/20 border-red-500/40 text-red-400 animate-pulse' :
-              isSuccess ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' :
-              'bg-amber-500/20 border-amber-500/40 text-amber-400'
+            <div className={`p-2 rounded-xl border ${
+              isCritical ? 'bg-red-500/30 border-red-400 text-red-300' :
+              isSuccess ? 'bg-emerald-500/30 border-emerald-400 text-emerald-300' :
+              'bg-amber-500/30 border-amber-400 text-amber-300'
             }`}>
-              {isCritical ? <Flame className="w-4 h-4" /> :
-               isSuccess ? <ShieldCheck className="w-4 h-4" /> :
-               <Bell className="w-4 h-4" />}
+              {isCritical ? <Flame className="w-5 h-5 text-yellow-300" /> :
+               isSuccess ? <ShieldCheck className="w-5 h-5" /> :
+               <Bell className="w-5 h-5 text-yellow-300" />}
             </div>
 
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-mono font-bold tracking-wider uppercase px-1.5 py-0.2 rounded bg-black/40 border border-white/10 text-yellow-300">
-                  {isHeatwave ? '🚨 EMERGENCY HEAT ALERT' : 'PUSH NOTIFICATION'}
+                <span className="text-[10px] font-mono font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-black/60 border border-white/20 text-yellow-300 shadow-sm">
+                  {isHeatwave ? '🚨 POP-UP EMERGENCY ALERT' : 'PUSH NOTIFICATION POPUP'}
                 </span>
-                <span className="text-[10px] font-mono text-slate-400">
-                  Live Alert
+                <span className="text-[10px] font-mono text-slate-300">
+                  Live System Alert
                 </span>
               </div>
-              <h4 className="text-xs sm:text-sm font-headline font-bold text-white tracking-wide mt-0.5 leading-snug">
+              <h4 className="text-xs sm:text-sm font-headline font-bold text-white tracking-wide mt-1 leading-snug">
                 {activeNotification.title}
               </h4>
             </div>
@@ -105,7 +105,7 @@ export const PushNotificationBanner: React.FC<PushNotificationBannerProps> = ({
           <button
             id="close-push-banner-btn"
             onClick={() => setActiveNotification(null)}
-            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
+            className="text-slate-400 hover:text-white p-1.5 rounded-xl bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
             aria-label="Dismiss Notification"
           >
             <X className="w-4 h-4" />

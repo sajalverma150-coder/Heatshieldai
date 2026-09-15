@@ -142,7 +142,7 @@ export const GpsNavigationModal: React.FC<GpsNavigationModalProps> = ({
   const progressPct = Math.round(((currentStepIndex + 1) / steps.length) * 100);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
       <div 
         id="gps-navigation-hud"
         className="bg-[#0b1326] border border-orange-500/70 rounded-t-3xl sm:rounded-3xl max-w-xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-5"

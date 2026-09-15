@@ -23,6 +23,7 @@ import {
 import { UserRole, EmergencyBroadcast, LanguageCode, WeatherTelemetry } from '../../types';
 import { ACTIVE_EMERGENCY_BROADCAST } from '../../data/mockData';
 import { CityData } from '../../data/indiaCities';
+import { speakEmergencyAlert, stopEmergencyAlertSpeech } from '../../services/hindiSpeechService';
 import { useAppTranslation } from '../../i18n/translations';
 
 interface EmergencyAlertsViewProps {
@@ -173,58 +174,40 @@ export const EmergencyAlertsView: React.FC<EmergencyAlertsViewProps> = ({
 
   // Audio OBD simulation and browser speech synthesis in English and Hindi
   const handleToggleAudio = (forcedLang?: LanguageCode) => {
-    const speechLang = forcedLang || activeVoiceLanguage;
+    const speechLang = forcedLang || activeVoiceLanguage || language;
 
     if (isPlayingAudio) {
       setIsPlayingAudio(false);
       if (audioIntervalRef.current) clearInterval(audioIntervalRef.current);
-      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      stopEmergencyAlertSpeech();
       return;
     }
 
     setIsPlayingAudio(true);
     setAudioProgress(0);
 
-    // Web Speech API synthesis
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const speechText = speechLang === 'hi' ? broadcast.messageHi : broadcast.messageEn;
-      const utterance = new SpeechSynthesisUtterance(speechText);
-      utterance.lang = speechLang === 'hi' ? 'hi-IN' : 'en-IN';
-      utterance.rate = speechLang === 'hi' ? 0.92 : 0.95;
-
-      try {
-        const voices = window.speechSynthesis.getVoices();
-        if (voices && voices.length > 0) {
-          if (speechLang === 'hi') {
-            const hiVoice = voices.find(v => v.lang.startsWith('hi') || v.name.toLowerCase().includes('hindi'));
-            if (hiVoice) utterance.voice = hiVoice;
-          } else {
-            const enVoice = voices.find(v => v.lang === 'en-IN' || v.lang.startsWith('en'));
-            if (enVoice) utterance.voice = enVoice;
-          }
-        }
-      } catch {
-        // Fallback to default browser synthesizer
-      }
-
-      utterance.onend = () => {
+    speakEmergencyAlert({
+      textHi: broadcast.messageHi,
+      textEn: broadcast.messageEn,
+      language: speechLang === 'hi' ? 'hi' : 'en',
+      onStart: () => {
+        setIsPlayingAudio(true);
+      },
+      onEnd: () => {
         setIsPlayingAudio(false);
         setAudioProgress(100);
         if (audioIntervalRef.current) clearInterval(audioIntervalRef.current);
-      };
-
-      utterance.onerror = () => {
+      },
+      onError: () => {
         setIsPlayingAudio(false);
         if (audioIntervalRef.current) clearInterval(audioIntervalRef.current);
-      };
-
-      window.speechSynthesis.speak(utterance);
-    }
+      },
+    });
 
     const duration = dynamicObdContent.durationSec || 45;
     const increment = 100 / duration;
 
+    if (audioIntervalRef.current) clearInterval(audioIntervalRef.current);
     audioIntervalRef.current = setInterval(() => {
       setAudioProgress((prev) => {
         if (prev >= 100) {

@@ -96,7 +96,7 @@ export const PolicyDocumentViewerModal: React.FC<PolicyDocumentViewerModalProps>
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xs overflow-y-auto">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xs overflow-y-auto">
       <div 
         className="relative w-full max-w-4xl bg-white rounded-xl shadow-2xl border border-[#CBD5E1] flex flex-col max-h-[92vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         role="dialog"

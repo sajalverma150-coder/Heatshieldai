@@ -50,7 +50,7 @@ export const TriageModal: React.FC<TriageModalProps> = ({
   const isGreen = !isCodeRed && !isYellow && isConfused === false && skinDry === false && hasVomiting === false;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#12304A]/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div className="fixed inset-0 z-[99999] bg-[#12304A]/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
       <div className="bg-white border-2 border-[#1E5A7A] rounded-2xl max-w-lg w-full p-4 sm:p-6 shadow-xl relative overflow-hidden text-[#263746]">
         
         {/* Header */}

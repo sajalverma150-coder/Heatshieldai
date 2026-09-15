@@ -96,7 +96,7 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
   return (
     <div 
       id="admin-auth-modal-overlay"
-      className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-3 sm:p-4"
+      className="fixed inset-0 z-[99999] bg-black/60 flex items-center justify-center p-3 sm:p-4"
       onClick={onClose}
     >
       <div 

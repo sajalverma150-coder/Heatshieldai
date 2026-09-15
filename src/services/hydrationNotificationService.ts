@@ -261,11 +261,13 @@ export function sendBrowserPushNotification(
     const dispatchNativeHydration = async () => {
       if (Notification.permission !== 'granted') return;
       
-      const options: NotificationOptions = {
+      const options: any = {
         body: alertStatus.message,
         icon: 'https://cdn-icons-png.flaticon.com/512/1684/1684375.png',
         badge: 'https://cdn-icons-png.flaticon.com/512/1684/1684375.png',
-        tag: 'heatshield-hydration-alert',
+        tag: `heatshield-hydration-${Date.now()}`,
+        renotify: true,
+        vibrate: [300, 100, 300, 100, 400],
         requireInteraction: alertStatus.severity === 'CRITICAL',
         silent: false,
       };
@@ -330,11 +332,15 @@ export function triggerTestPushNotification(customTitle?: string, customBody?: s
       }
       if (Notification.permission !== 'granted') return;
 
-      const options: NotificationOptions = {
+      const options: any = {
         body: payload.body,
         icon: 'https://cdn-icons-png.flaticon.com/512/1684/1684375.png',
         badge: 'https://cdn-icons-png.flaticon.com/512/1684/1684375.png',
-        tag: 'heatshield-test-alert',
+        tag: `heatshield-test-${Date.now()}`,
+        renotify: true,
+        vibrate: [300, 100, 300, 100, 400],
+        requireInteraction: true,
+        silent: false,
       };
 
       if ('serviceWorker' in navigator) {

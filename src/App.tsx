@@ -65,6 +65,7 @@ import {
   generateCalibratedCityForecast,
   CityLiveSummary 
 } from './services/weatherApiService';
+import { speakEmergencyAlert } from './services/hindiSpeechService';
 
 export function App() {
   const [currentTab, setCurrentTab] = useState<NavigationTab>('overview');
@@ -81,15 +82,14 @@ export function App() {
   const [isHighContrast, setIsHighContrast] = useState<boolean>(false);
 
   const handleAnnounceAlert = () => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const text = language === 'hi'
-        ? `सावधान: ${selectedCity.name} के लिए अत्यधिक ताप चेतावनी सक्रिय है। वर्तमान तापमान ${weather.dryBulbTemp} डिग्री सेल्सियस है। दोपहर के समय सीधे धूप से बचें और पर्याप्त जल पिएं। आपातकाल में 108 डायल करें।`
-        : `National Weather Service Alert for ${selectedCity.name}: Severe heat conditions in effect. Dry bulb temperature is ${weather.dryBulbTemp} degrees Celsius, wet bulb globe temperature ${weather.wbgt} degrees. Refrain from strenuous outdoor activity. For medical emergency, call 108.`;
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = language === 'hi' ? 'hi-IN' : 'en-IN';
-      window.speechSynthesis.speak(utterance);
-    }
+    const textHi = `सावधान! ${selectedCity.name} के लिए अत्यधिक ताप चेतावनी सक्रिय है। वर्तमान परिवेश तापमान ${weather.dryBulbTemp} डिग्री सेल्सियस है। दोपहर के समय सीधे धूप में जाने से बचें, नियमित जल पिएं और आपातकाल में 108 पर संपर्क करें।`;
+    const textEn = `National Weather Service Alert for ${selectedCity.name}: Severe heat conditions in effect. Dry bulb temperature is ${weather.dryBulbTemp} degrees Celsius. Refrain from outdoor activity during midday hours. For medical emergency, call 108.`;
+
+    speakEmergencyAlert({
+      textHi,
+      textEn,
+      language: language === 'hi' ? 'hi' : 'en',
+    });
   };
 
   // Clear any persistent storage on page load/reload to guarantee auto logout on reload

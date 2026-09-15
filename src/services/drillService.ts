@@ -220,11 +220,13 @@ export function dispatchHeatwaveEmergencyPushNotification({
 
     if (Notification.permission !== 'granted') return;
 
-    const notificationOptions: NotificationOptions = {
+    const notificationOptions: any = {
       body: bodyText,
       icon: 'https://cdn-icons-png.flaticon.com/512/1684/1684375.png',
       badge: 'https://cdn-icons-png.flaticon.com/512/1684/1684375.png',
-      tag: 'heatshield-heatwave-emergency',
+      tag: `heatshield-heatwave-${now}`,
+      renotify: true,
+      vibrate: [300, 100, 300, 100, 400],
       requireInteraction: true,
       silent: false,
     };

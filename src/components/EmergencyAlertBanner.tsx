@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { AlertTriangle, ChevronRight, X, Volume2, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, ChevronRight, X, Volume2, Square, ShieldAlert } from 'lucide-react';
 import { LanguageCode, HeatRiskLevel } from '../types';
 import { RISK_STANDARDS } from '../utils/heatRiskStandards';
+import { speakEmergencyAlert, stopEmergencyAlertSpeech } from '../services/hindiSpeechService';
 
 interface EmergencyAlertBannerProps {
   language: LanguageCode;
@@ -23,10 +24,38 @@ export const EmergencyAlertBanner: React.FC<EmergencyAlertBannerProps> = ({
   onAnnounceAlert,
 }) => {
   const [isDismissed, setIsDismissed] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const isHindi = language === 'hi';
   const risk = RISK_STANDARDS[nationalRiskLevel] || RISK_STANDARDS.VERY_HIGH;
 
   if (isDismissed) return null;
+
+  const handleSpeak = () => {
+    if (isSpeaking) {
+      stopEmergencyAlertSpeech();
+      setIsSpeaking(false);
+      return;
+    }
+
+    if (onAnnounceAlert) {
+      onAnnounceAlert();
+      setIsSpeaking(true);
+      setTimeout(() => setIsSpeaking(false), 8000);
+      return;
+    }
+
+    const textHi = `सावधान! राष्ट्रीय आपदा प्रबंधन प्राधिकरण द्वारा चेतावनी: ${startDate} से ${endDate} तक ${affectedDistrictsCount} जिलों में भीषण लू और अत्यधिक ताप का रेड अलर्ट जारी है। दोपहर में धूप से बचें, पर्याप्त जल पिएं और आपातकाल में 108 पर संपर्क करें।`;
+    const textEn = `National Heat Emergency Alert: Severe heat conditions expected across ${affectedDistrictsCount} districts from ${startDate} to ${endDate}. Stay hydrated, avoid midday sun exposure, and call 108 for medical emergency.`;
+
+    speakEmergencyAlert({
+      textHi,
+      textEn,
+      language: isHindi ? 'hi' : 'en',
+      onStart: () => setIsSpeaking(true),
+      onEnd: () => setIsSpeaking(false),
+      onError: () => setIsSpeaking(false),
+    });
+  };
 
   return (
     <aside 
@@ -77,8 +106,25 @@ export const EmergencyAlertBanner: React.FC<EmergencyAlertBannerProps> = ({
           </div>
         </div>
 
-        {/* Right Actions: View Guidance + Dismiss */}
+        {/* Right Actions: Voice Announcement + View Guidance + Dismiss */}
         <div className="flex items-center gap-2 shrink-0">
+          
+          {/* Audio Voice Announcement Button */}
+          <button
+            onClick={handleSpeak}
+            className={`flex items-center gap-1.5 px-2.5 py-1 sm:py-1.5 rounded text-xs font-bold cursor-pointer transition-all border ${
+              isSpeaking
+                ? 'bg-red-700 text-white border-red-500 animate-pulse'
+                : 'bg-white text-[#17202A] hover:bg-slate-100 border-slate-300'
+            }`}
+            title={isHindi ? 'हिन्दी वॉइस बुलेटिन सुनें' : 'Listen to Hindi / English Audio Alert'}
+          >
+            {isSpeaking ? <Square className="w-3.5 h-3.5 fill-current text-white" /> : <Volume2 className="w-3.5 h-3.5 text-red-600" />}
+            <span className="hidden xs:inline">
+              {isSpeaking ? (isHindi ? 'रोके' : 'Stop') : (isHindi ? 'वॉइस बुलेटिन' : 'Audio Bulletin')}
+            </span>
+          </button>
+
           <button
             onClick={onViewSafetyGuidance}
             className="flex items-center gap-1 px-3 py-1 sm:py-1.5 rounded text-white text-xs font-semibold cursor-pointer shadow-xs hover:opacity-95 transition-opacity whitespace-nowrap"

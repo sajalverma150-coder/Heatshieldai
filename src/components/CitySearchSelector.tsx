@@ -294,7 +294,7 @@ export const CitySearchSelector: React.FC<CitySearchSelectorProps> = ({
   return (
     <div 
       id="city-search-modal-backdrop"
-      className="fixed inset-0 z-50 bg-[#12304A]/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+      className="fixed inset-0 z-[99999] bg-[#12304A]/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}

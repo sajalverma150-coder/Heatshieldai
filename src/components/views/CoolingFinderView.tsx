@@ -646,7 +646,7 @@ export const CoolingFinderView: React.FC<CoolingFinderViewProps> = ({
 
       {/* Request Water Tanker Modal */}
       {isTankerModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[99999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-md w-full p-6 shadow-xl animate-in fade-in">
             <div className="w-12 h-12 rounded-xl bg-cyan-500/15 border border-cyan-500/30 mx-auto flex items-center justify-center text-cyan-400 mb-3">
               <Truck className="w-6 h-6" />
@@ -703,7 +703,7 @@ export const CoolingFinderView: React.FC<CoolingFinderViewProps> = ({
 
       {/* Facility Phone Call Simulation Modal */}
       {callModalFacility && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[99999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-sm w-full p-5 text-center shadow-xl animate-in fade-in">
             <div className="w-12 h-12 rounded-xl bg-orange-500/15 border border-orange-500/30 mx-auto flex items-center justify-center text-orange-400 mb-3">
               <PhoneCall className="w-6 h-6" />

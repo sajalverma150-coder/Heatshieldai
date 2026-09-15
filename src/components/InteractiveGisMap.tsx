@@ -24,7 +24,6 @@ import {
 } from 'lucide-react';
 import { CoolingFacility } from '../types';
 import { CityData, INDIAN_CITIES } from '../data/indiaCities';
-import { LocationAutocomplete } from './LocationAutocomplete';
 import { LocationSearchResult, calculateGeodesicDistance } from '../services/locationSearch';
 
 interface InteractiveGisMapProps {
@@ -579,14 +578,6 @@ export const InteractiveGisMap: React.FC<InteractiveGisMapProps> = ({
     mapInstanceRef.current.flyTo([selectedCity.lat, selectedCity.lng], 13, { duration: 1.2 });
   };
 
-  // Handle Location Autocomplete Selection
-  const handleLocationPicked = (loc: LocationSearchResult) => {
-    setInternalSearchedLoc(loc);
-    if (onSelectSearchedLocation) {
-      onSelectSearchedLocation(loc);
-    }
-  };
-
   // Clear current searched location
   const handleClearSearched = () => {
     setInternalSearchedLoc(null);
@@ -599,23 +590,32 @@ export const InteractiveGisMap: React.FC<InteractiveGisMapProps> = ({
     }
   };
 
-  return (
-    <div className={`relative w-full rounded-lg overflow-hidden border border-[#D6E0E5] bg-[#E8F1F5] ${isFullscreen ? 'fixed inset-4 z-50 shadow-2xl h-[calc(100vh-2rem)]' : 'h-[460px] sm:h-[520px]'}`}>
-      
-      {/* Top Floating Control Bar: Search Omnibar + City Badge + Layers */}
-      <div className="absolute top-3 left-3 right-3 z-[400] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pointer-events-none">
-        
-        {/* Google Maps-Style Live Autocomplete Search Input */}
-        <div className="pointer-events-auto flex-1 max-w-md">
-          <LocationAutocomplete
-            onSelectLocation={handleLocationPicked}
-            placeholder={`Search any building, monument, area in ${selectedCity.name} or India...`}
-            biasCoordinates={{ lat: selectedCity.lat, lng: selectedCity.lng }}
-          />
-        </div>
+  // Body scroll lock and map invalidateSize on fullscreen toggle
+  useEffect(() => {
+    if (isFullscreen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    const timer = setTimeout(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
+    }, 150);
+    return () => {
+      document.body.style.overflow = '';
+      clearTimeout(timer);
+    };
+  }, [isFullscreen]);
 
+  return (
+    <div className={`transition-all bg-[#E8F1F5] ${isFullscreen ? 'fixed inset-0 z-[9999] p-2 sm:p-4 h-screen w-screen overflow-hidden shadow-2xl' : 'relative w-full rounded-lg overflow-hidden border border-[#D6E0E5] h-[460px] sm:h-[520px]'}`}>
+      
+      {/* Top Floating Control Bar: Layers & Toggles */}
+      <div className="absolute top-3 right-3 z-[400] flex items-center justify-end gap-1.5 pointer-events-none">
+        
         {/* Map Layers & Toggles */}
-        <div className="pointer-events-auto flex items-center justify-end gap-1.5 bg-white/95 backdrop-blur-md p-1 rounded-md border border-[#D6E0E5] shadow-xs text-xs font-mono self-end sm:self-auto text-[#263746]">
+        <div className="pointer-events-auto flex items-center justify-end gap-1.5 bg-white/95 backdrop-blur-md p-1 rounded-md border border-[#D6E0E5] shadow-xs text-xs font-mono text-[#263746]">
           
           {/* Base Layer Switcher */}
           <div className="flex items-center gap-1 border-r border-[#D6E0E5] pr-1 mr-0.5">
@@ -702,9 +702,9 @@ export const InteractiveGisMap: React.FC<InteractiveGisMapProps> = ({
 
       </div>
 
-      {/* Searched Location Banner (if active) */}
+      {/* Searched Location Banner (if active from facility cards panel) */}
       {activeSearchedLoc && (
-        <div className="absolute top-16 left-3 right-3 sm:left-3 sm:right-auto sm:max-w-md z-[400] bg-white/95 backdrop-blur-md p-2.5 px-3 rounded-md border border-[#B7791F] shadow-md animate-in fade-in flex items-center justify-between gap-3 text-[#263746]">
+        <div className="absolute top-3 left-3 right-auto max-w-sm sm:max-w-md z-[400] bg-white/95 backdrop-blur-md p-2 px-3 rounded-md border border-[#B7791F] shadow-md animate-in fade-in flex items-center justify-between gap-3 text-[#263746]">
           <div className="flex items-center gap-2 min-w-0">
             <span className="w-2 h-2 rounded-full bg-[#B7791F] shrink-0" />
             <div className="truncate">
@@ -733,7 +733,7 @@ export const InteractiveGisMap: React.FC<InteractiveGisMapProps> = ({
 
       {/* Active Navigation HUD Banner if Route is Active */}
       {activeNavigationFacility && (
-        <div className="absolute top-28 left-3 right-3 sm:left-auto sm:right-3 sm:w-96 z-[400] bg-white/95 backdrop-blur-md p-3 rounded-md border border-[#1E5A7A] shadow-md animate-in fade-in slide-in-from-top-3 text-[#263746]">
+        <div className="absolute bottom-12 sm:bottom-14 left-3 right-3 sm:left-auto sm:right-3 sm:w-96 z-[400] bg-white/95 backdrop-blur-md p-3 rounded-md border border-[#1E5A7A] shadow-md animate-in fade-in slide-in-from-bottom-3 text-[#263746]">
           <div className="flex items-start justify-between gap-2">
             <div>
               <div className="flex items-center gap-1.5">

@@ -126,7 +126,7 @@ export const EmergencyCallModal: React.FC<EmergencyCallModalProps> = ({
   const current = helplineDetails[activeType] || helplineDetails['108'];
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#12304A]/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[99999] bg-[#12304A]/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
       <div className="bg-white border-2 border-[#135A9C] rounded-2xl max-w-lg w-full p-5 sm:p-6 text-center shadow-2xl relative overflow-hidden text-[#263746] my-auto">
         
         {/* Helpline Selector Tabs */}
