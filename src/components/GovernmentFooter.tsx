@@ -197,15 +197,25 @@ export const GovernmentFooter: React.FC<GovernmentFooterProps> = ({
                 <span className="group-hover:underline">IMD Telemetry Quality Assurance ISO 9001:2015</span>
               </button>
             </li>
-            <li>
+            <li className="flex flex-wrap items-center gap-1.5 py-0.5 group">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#135A9C] group-hover:bg-[#F4A62A] shrink-0 transition-colors" />
               <button
                 onClick={() => setPolicyModalTab('grievance')}
-                className="hover:text-white transition-colors cursor-pointer text-left flex items-center gap-1.5 group py-0.5"
+                className="hover:text-white transition-colors cursor-pointer text-left group-hover:underline"
                 title="Submit or view Citizen Grievance Redressal mechanism"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-[#135A9C] group-hover:bg-[#F4A62A] shrink-0 transition-colors" />
-                <span className="group-hover:underline">Citizen Grievance Redressal: heatresponse-ndma@gov.in</span>
+                Citizen Grievance Redressal:
               </button>
+              <a
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=heatresponse-ndma@gov.in"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#90CDF4] hover:text-white hover:underline transition-colors inline-flex items-center gap-1 font-mono text-[11px]"
+                title="Open Gmail to compose email to heatresponse-ndma@gov.in"
+              >
+                <span>heatresponse-ndma@gov.in</span>
+                <ExternalLink className="w-2.5 h-2.5 opacity-75" />
+              </a>
             </li>
           </ul>
         </div>

@@ -419,6 +419,19 @@ export const GovernancePolicyModal: React.FC<GovernancePolicyModalProps> = ({
                   <p className="text-xs text-[#1D4ED8] mt-0.5">
                     Under the National Heat Action Plan (HAP), citizens may report non-functional drinking water kiosks (piaus), closed cooling shelters, illegal outdoor labor during heat curfews, or emergency room treatment issues.
                   </p>
+                  <div className="mt-2 flex items-center gap-1.5 text-xs text-[#1E40AF]">
+                    <span>Direct Grievance Desk:</span>
+                    <a
+                      href="https://mail.google.com/mail/?view=cm&fs=1&to=heatresponse-ndma@gov.in"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold underline hover:text-[#172554] inline-flex items-center gap-1"
+                      title="Open Gmail to compose email to heatresponse-ndma@gov.in"
+                    >
+                      heatresponse-ndma@gov.in
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
                 </div>
               </div>
 
@@ -567,8 +580,11 @@ export const GovernancePolicyModal: React.FC<GovernancePolicyModalProps> = ({
 
                     <div className="flex items-center gap-2 w-full sm:w-auto">
                       <a
-                        href={`mailto:heatresponse-ndma@gov.in?subject=HeatWave%20Grievance%20Report%20-%20${encodeURIComponent(grievanceForm.district)}&body=Location:%20${encodeURIComponent(grievanceForm.location)}%0ACategory:%20${encodeURIComponent(grievanceForm.category)}%0ADescription:%20${encodeURIComponent(grievanceForm.description)}`}
+                        href="https://mail.google.com/mail/?view=cm&fs=1&to=heatresponse-ndma@gov.in"
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="px-3 py-2 rounded bg-white hover:bg-[#F1F5F9] border border-[#CBD5E1] text-[#0B1F3A] text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                        title="Open Gmail to compose email to heatresponse-ndma@gov.in"
                       >
                         <Mail className="w-3.5 h-3.5 text-[#135A9C]" />
                         <span>Email heatresponse-ndma@gov.in</span>
