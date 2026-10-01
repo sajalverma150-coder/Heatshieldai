@@ -91,7 +91,7 @@ export async function fetchLiveWeatherFromApi(
   lng: number,
   fallbackWeather: WeatherTelemetry
 ): Promise<WeatherTelemetry> {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,direct_normal_irradiance&timezone=auto`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,direct_normal_irradiance,uv_index&timezone=auto`;
 
   const data = await safeFetchOpenMeteoJson(url);
   if (!data || !data.current) {
@@ -152,6 +152,7 @@ export async function fetchLiveWeatherFromApi(
     utci,
     humidity,
     solarRadiation,
+    uvIndex: typeof current.uv_index === 'number' ? Number(current.uv_index.toFixed(1)) : undefined,
     windSpeed,
     sweatLossRate,
     riskLevel,

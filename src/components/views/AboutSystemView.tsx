@@ -23,20 +23,35 @@ export const AboutSystemView: React.FC<AboutSystemViewProps> = ({ language }) =>
   return (
     <div className="space-y-6 pb-12">
       
-      {/* Header */}
-      <div className="rounded-xl p-5 sm:p-6 bg-[#0B1F3A] text-white border border-[#135A9C] shadow-md space-y-2">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-mono uppercase bg-[#135A9C] text-white px-2.5 py-0.5 rounded font-bold tracking-wider">
+      {/* Executive Command Header */}
+      <div className="rounded-2xl p-6 sm:p-8 gov-hero-command border border-[#1E4373] text-white shadow-lg space-y-3 relative overflow-hidden">
+        {/* Ashoka Chakra Watermark */}
+        <div 
+          className="absolute -right-10 -bottom-12 w-64 h-64 opacity-[0.06] pointer-events-none select-none"
+          aria-hidden="true"
+        >
+          <svg viewBox="0 0 24 24" className="w-full h-full text-white" fill="currentColor">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.2" fill="none" />
+            <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+            <path d="M12 2 L12 22 M2 12 L22 12 M5 5 L19 19 M5 19 L19 5 M7.05 2.95 L16.95 21.05 M2.95 7.05 L21.05 16.95" stroke="currentColor" strokeWidth="0.8" />
+          </svg>
+        </div>
+
+        <div className="flex items-center gap-2 relative z-10">
+          <span className="text-[10px] font-mono uppercase bg-[#135A9C] text-white px-2.5 py-0.5 rounded-full font-bold tracking-wider shadow-xs">
             INSTITUTIONAL OVERVIEW
           </span>
+          <span className="text-xs text-[#E5A93C] font-mono font-bold">
+            · STATUTORY PUBLIC SAFETY MANDATE
+          </span>
         </div>
-        <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight relative z-10">
           {isHindi ? 'राष्ट्रीय ताप स्वास्थ्य पूर्व चेतावनी प्रणाली के बारे में' : 'About the National Heat Health Early Warning System'}
         </h1>
-        <p className="text-xs sm:text-sm text-[#E2E8F0] leading-relaxed max-w-4xl font-normal">
+        <p className="text-xs sm:text-sm text-[#93C5FD] leading-relaxed font-normal max-w-3xl relative z-10">
           {isHindi 
             ? 'स्वास्थ्य एवं परिवार कल्याण मंत्रालय, एनडीएमए एवं आईएमडी का राष्ट्रीय संयुक्त उपक्रम' 
-            : 'A joint public-safety framework operated by the Ministry of Health & Family Welfare, NDMA, and IMD'}
+            : 'A joint public-safety framework operated by the Ministry of Health & Family Welfare, NDMA, and IMD covering 800+ districts nationwide.'}
         </p>
       </div>
 

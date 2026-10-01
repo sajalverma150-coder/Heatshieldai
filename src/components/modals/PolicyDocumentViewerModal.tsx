@@ -111,7 +111,7 @@ export const PolicyDocumentViewerModal: React.FC<PolicyDocumentViewerModalProps>
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-[10px] font-mono tracking-wider uppercase bg-[#135A9C] px-2 py-0.5 rounded text-white font-semibold">
-                  OFFICIAL GOVERNMENT FRAMEWORK
+                  HEAT ACTION PROTOCOL
                 </span>
                 <span className="text-[10px] font-mono bg-white/10 px-2 py-0.5 rounded text-[#D9E2EC]">
                   Ref: {document.gazetteRef}
@@ -318,7 +318,7 @@ export const PolicyDocumentViewerModal: React.FC<PolicyDocumentViewerModalProps>
         <div className="bg-[#F8FAFC] border-t border-[#CBD5E1] px-5 py-3 flex items-center justify-between shrink-0 text-xs">
           <div className="text-[#64748B] text-[11px] flex items-center gap-1.5">
             <Building2 className="w-3.5 h-3.5 text-[#135A9C]" />
-            <span>Official Government of India Publication • Verified Digital Copy</span>
+            <span>Verified Digital Publication • Heat Action Framework Copy</span>
           </div>
 
           <div className="flex items-center gap-2">

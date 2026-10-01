@@ -205,7 +205,29 @@ export function App() {
   const [isHealthReportOpen, setIsHealthReportOpen] = useState<boolean>(false);
   const [isPushSettingsOpen, setIsPushSettingsOpen] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [userGpsCoords, setUserGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  // Monitor browser full-screen state
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const handleToggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (err) {
+      console.warn('Fullscreen request not supported or denied:', err);
+    }
+  };
 
   const handleTriggerSOS = (type: EmergencyHelplineType = '108') => {
     setEmergencyHelplineType(type);
@@ -609,6 +631,8 @@ export function App() {
         {/* Emergency Alert Banner */}
         <EmergencyAlertBanner
           nationalRiskLevel={weather.riskLevel}
+          dryBulbTemp={weather.dryBulbTemp}
+          wbgt={weather.wbgt}
           onViewSafetyGuidance={() => setCurrentTab('health-guidance')}
           language={language}
         />
@@ -640,6 +664,8 @@ export function App() {
           onAnnounceAlert={handleAnnounceAlert}
           isDrillModeActive={isDrillModeActive}
           onToggleDrillMode={handleToggleDrillMode}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={handleToggleFullscreen}
         />
 
         {/* Heatwave Emergency Drill Simulation Banner (Demonstration / Judge Mode) */}
@@ -667,10 +693,10 @@ export function App() {
           language={language}
         />
 
-        {/* Main Responsive Container Layout */}
-        <div className="flex-1 flex overflow-hidden">
+        {/* Main Desktop + Content Layout */}
+        <div className="flex-1 flex w-full relative bg-[#061528] min-h-0">
           
-          {/* Left Sidebar (Desktop / PC View) */}
+          {/* Left Desktop Navigation Sidebar */}
           <Sidebar
             currentTab={currentTab}
             onSelectTab={setCurrentTab}
@@ -678,16 +704,22 @@ export function App() {
             selectedCity={selectedCity}
             onOpenCitySelector={() => setIsCitySelectorOpen(true)}
             unreadAlertCount={1}
+            onTriggerSOS={(type) => handleTriggerSOS((type as EmergencyHelplineType) || '108')}
+            isAdminAuthenticated={isAdminAuthenticated}
+            onOpenAdminAuthModal={() => setIsAdminAuthOpen(true)}
+            onLockAdminSession={handleLockAdminSession}
+            isDrillModeActive={isDrillModeActive}
+            onToggleDrillMode={handleToggleDrillMode}
           />
 
-          {/* Dynamic Content Area: seamlessly fluid on Mobile, Tablet & PC */}
-          <main className="flex-1 overflow-y-auto bg-[#F5F8FB] px-3 sm:px-6 lg:px-8 py-4 sm:py-6 pb-24 lg:pb-8 flex flex-col justify-between">
-            <div className="max-w-6xl mx-auto w-full">
+          {/* Dynamic Content Area: fluid edge-to-edge full width without blank white margins */}
+          <main className="flex-1 overflow-y-auto bg-[#F5F8FB] px-3 sm:px-6 lg:px-8 py-4 sm:py-6 pb-24 lg:pb-8 flex flex-col justify-between w-full min-w-0">
+            <div className="w-full">
               {renderActiveView()}
             </div>
 
             {/* Institutional Government Footer */}
-            <div className="mt-8">
+            <div className="mt-8 w-full">
               <GovernmentFooter
                 language={language}
                 onSelectTab={(tab) => setCurrentTab(tab as NavigationTab)}

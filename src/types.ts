@@ -42,6 +42,7 @@ export interface WeatherTelemetry {
   utci: number; // Universal Thermal Climate Index °C
   humidity: number; // %
   solarRadiation: number; // W/m²
+  uvIndex?: number; // WHO UV Index
   windSpeed: number; // km/h
   uhiAnomaly: number; // Urban Heat Island °C
   sweatLossRate: number; // ml/hr

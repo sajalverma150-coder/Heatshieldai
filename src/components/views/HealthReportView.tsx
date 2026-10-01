@@ -287,7 +287,7 @@ export const HealthReportView: React.FC<HealthReportViewProps> = ({
 <body>
   <div class="header">
     <div class="title-area">
-      <div class="badge-emergency">OFFICIAL CLINICAL DOSSIER • NDMA / MOHFW PROTOCOL</div>
+      <div class="badge-emergency">CLINICAL HEALTH DOSSIER • BIOMETEOROLOGICAL PROTOCOL</div>
       <h1>Physiological Heat Health & Clinical Risk Dossier</h1>
       <p>HeatShield AI Automated Biometeorological & Human Thermoregulation Assessment</p>
     </div>
@@ -523,7 +523,7 @@ Emergency ICE Contact: ${safeProfile.iceContact.name} (${safeProfile.iceContact.
     });
 
   return (
-    <div id="health-report-dossier" className="space-y-5 pb-16 max-w-5xl mx-auto">
+    <div id="health-report-dossier" className="space-y-5 pb-16 w-full">
       
       {/* Action Toolbar (Hidden during Print) */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-sm print:hidden">

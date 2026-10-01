@@ -81,10 +81,17 @@ export const LiveTelemetryView: React.FC<LiveTelemetryViewProps> = ({
   const [showOrderModal, setShowOrderModal] = useState<boolean>(false);
   const [forecastViewMode, setForecastViewMode] = useState<'24h' | '7day'>('24h');
 
-  // Exact timestamp representation as requested
+  // Exact timestamp representation
   const exactUpdatedTime = useMemo(() => {
-    return 'September 12, 2026, 10:30 AM IST';
-  }, []);
+    const now = new Date();
+    return now.toLocaleDateString(isHindi ? 'hi-IN' : 'en-IN', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }) + ' IST';
+  }, [isHindi]);
 
   // Nearest cooling shelter calculation
   const nearestShelter = useMemo(() => {

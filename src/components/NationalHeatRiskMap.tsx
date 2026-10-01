@@ -82,13 +82,25 @@ export const NationalHeatRiskMap: React.FC<NationalHeatRiskMapProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState<DistrictRiskEntry | null>(null);
 
-  const forecastSteps = [
-    { label: 'Today (12 Sep)', offset: 0, periodStr: '12 September 2026' },
-    { label: '+24h (13 Sep)', offset: 0.6, periodStr: '13 September 2026' },
-    { label: '+48h (14 Sep)', offset: 1.2, periodStr: '14 September 2026' },
-    { label: '+72h (15 Sep)', offset: 0.4, periodStr: '15 September 2026' },
-    { label: '+5 Days (17 Sep)', offset: -1.8, periodStr: '16-17 September 2026' },
-  ];
+  const forecastSteps = useMemo(() => {
+    const now = new Date();
+    const formatDay = (daysAhead: number) => {
+      const target = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
+      return target.toLocaleDateString(isHindi ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short' });
+    };
+    const formatFull = (daysAhead: number) => {
+      const target = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
+      return target.toLocaleDateString(isHindi ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+    };
+
+    return [
+      { label: `Today (${formatDay(0)})`, offset: 0, periodStr: formatFull(0) },
+      { label: `+24h (${formatDay(1)})`, offset: 0.6, periodStr: formatFull(1) },
+      { label: `+48h (${formatDay(2)})`, offset: 1.2, periodStr: formatFull(2) },
+      { label: `+72h (${formatDay(3)})`, offset: 0.4, periodStr: formatFull(3) },
+      { label: `+5 Days (${formatDay(5)})`, offset: -1.8, periodStr: `${formatDay(4)} – ${formatFull(5)}` },
+    ];
+  }, [isHindi]);
 
   // Generate enriched district risk dataset based on Indian cities with calibrated variation across forecast timeline
   const districtEntries: DistrictRiskEntry[] = useMemo(() => {

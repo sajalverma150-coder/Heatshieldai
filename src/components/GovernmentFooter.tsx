@@ -22,7 +22,7 @@ export const GovernmentFooter: React.FC<GovernmentFooterProps> = ({
       
       {/* Top Banner inside footer: 24x7 Helplines */}
       <div className="bg-[#071527] border-b border-[#135A9C]/50 px-4 sm:px-8 py-4">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded bg-[#C7352B] flex items-center justify-center text-white shrink-0">
               <PhoneCall className="w-4 h-4" />
@@ -70,22 +70,22 @@ export const GovernmentFooter: React.FC<GovernmentFooterProps> = ({
       </div>
 
       {/* Main Footer Links & Information */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8 grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="w-full px-4 sm:px-8 py-8 grid grid-cols-1 md:grid-cols-4 gap-8">
         
-        {/* Column 1: Ministry Ownership */}
+        {/* Column 1: System Identification */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded bg-[#135A9C] flex items-center justify-center font-bold text-[#F4A62A] text-xs">
-              ☸
+              ⚡
             </div>
             <span className="font-bold text-white text-sm">
-              {isHindi ? 'भारत सरकार' : 'Government of India'}
+              {isHindi ? 'हीटशील्ड एआई' : 'HeatShield AI'}
             </span>
           </div>
           <p className="text-xs text-[#A0AEC0] leading-relaxed">
             {isHindi
-              ? 'राष्ट्रीय ताप स्वास्थ्य पूर्व चेतावनी प्रणाली (HeatShield AI) स्वास्थ्य एवं परिवार कल्याण मंत्रालय तथा राष्ट्रीय आपदा प्रबंधन प्राधिकरण (NDMA) का संयुक्त राष्ट्रीय लोक सुरक्षा उपक्रम है।'
-              : 'The National Heat Health Early Warning System is an official public-safety initiative jointly operated by the Ministry of Health & Family Welfare, NDMA, and the India Meteorological Department (IMD).'}
+              ? 'राष्ट्रीय ताप स्वास्थ्य पूर्व चेतावनी प्रणाली (HeatShield AI) वास्तविक समय ताप जोखिम, जैव-मौसम विज्ञान स्वास्थ्य सूचकांक तथा जन सुरक्षा का उन्नत डिजिटल प्लेटफॉर्म है।'
+              : 'The National Heat Health Early Warning System is an advanced biometeorological public safety platform monitoring real-time heat indices, wet-bulb globe temperature (WBGT), and preventive health protocols.'}
           </p>
           <div className="text-[11px] font-mono text-[#718096]">
             System Core ID: NHHEWS-IN-PROD-2026<br />
@@ -224,7 +224,7 @@ export const GovernmentFooter: React.FC<GovernmentFooterProps> = ({
 
       {/* Bottom Bar: Copyright and Disclaimer */}
       <div className="bg-[#050E1A] border-t border-[#135A9C]/30 px-4 sm:px-8 py-3 text-[11px] text-[#718096]">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
+        <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
           <div>
             © 2026 National Heat Health Early Warning System. Hosted on National Informatics Cloud Infrastructure.
           </div>

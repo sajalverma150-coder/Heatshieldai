@@ -69,7 +69,7 @@ export const HeatwaveDrillBanner: React.FC<HeatwaveDrillBannerProps> = ({
       aria-label="Heatwave Emergency Simulation Drill"
       className="w-full bg-gradient-to-r from-[#7F1D1D] via-[#991B1B] to-[#7F1D1D] text-white border-b-2 border-[#EF4444] shadow-lg sticky top-[57px] sm:top-[61px] z-30 animate-in fade-in slide-in-from-top-2 duration-200"
     >
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5">
+      <div className="w-full px-3 sm:px-6 py-2.5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           
           {/* Left: Simulation Indicator & Scenario Info */}

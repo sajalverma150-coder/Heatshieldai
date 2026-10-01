@@ -129,7 +129,7 @@ export const GovernancePolicyModal: React.FC<GovernancePolicyModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-mono tracking-widest uppercase bg-[#135A9C] px-2 py-0.5 rounded text-white font-semibold">
-                  GOVERNMENT OF INDIA • GOVERNANCE & POLICIES
+                  HEATSHIELD AI • GOVERNANCE & POLICIES
                 </span>
               </div>
               <h2 className="text-base sm:text-lg font-bold text-white mt-0.5">

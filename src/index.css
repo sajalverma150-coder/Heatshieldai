@@ -1,29 +1,40 @@
 @import "tailwindcss";
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&family=Public+Sans:wght@500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&family=Public+Sans:wght@500;600;700;800;900&display=swap");
 
 :root {
   --font-display: "Public Sans", system-ui, -apple-system, sans-serif;
   --font-body: "Noto Sans", system-ui, -apple-system, sans-serif;
   --font-data: "IBM Plex Sans", "IBM Plex Mono", monospace;
 
-  /* Official Government Palette */
+  /* Professional Civic & Biometeorological Palette */
   --gov-navy: #0B1F3A;
+  --gov-deep: #061324;
+  --gov-surface: #0E2544;
   --official-blue: #135A9C;
-  --clean-bg: #F5F8FB;
-  --text-charcoal: #17202A;
-  --text-slate: #526273;
-  --border-pale: #D9E2EC;
-  --heat-amber: #F4A62A;
+  --official-blue-hover: #0D4578;
+  --clean-bg: #F4F7FA;
+  --text-charcoal: #0F172A;
+  --text-slate: #475569;
+  --border-pale: #D3DFEC;
+  --heat-amber: #F59E0B;
+  --gov-gold: #E5A93C;
 
-  /* Heat Risk Standard Palette */
+  /* National Tricolor Standards */
+  --saffron: #FF671F;
+  --white: #FFFFFF;
+  --india-green: #046A38;
+  --chakra-blue: #000080;
+
+  /* Heat Risk Standard Palette (IMD-NDMA Matrix) */
   --risk-minimal: #16804A;
   --risk-moderate: #E5A400;
   --risk-high: #E87500;
   --risk-very-high: #C7352B;
   --risk-extreme: #7A1F2B;
 
-  --shadow-subtle: 0 1px 3px rgba(11, 31, 58, 0.06), 0 1px 2px rgba(11, 31, 58, 0.04);
-  --shadow-card: 0 2px 4px rgba(11, 31, 58, 0.06);
+  --shadow-subtle: 0 1px 3px 0 rgba(11, 31, 58, 0.05), 0 1px 2px -1px rgba(11, 31, 58, 0.05);
+  --shadow-card: 0 4px 6px -1px rgba(11, 31, 58, 0.07), 0 2px 4px -2px rgba(11, 31, 58, 0.05);
+  --shadow-command: 0 10px 25px -5px rgba(7, 21, 39, 0.25), 0 8px 10px -6px rgba(7, 21, 39, 0.2);
 }
 
 @layer base {
@@ -35,6 +46,7 @@
     color: var(--text-charcoal);
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   button,
@@ -53,7 +65,8 @@
   .font-headline,
   .font-display {
     font-family: var(--font-display);
-    line-height: 1.2;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
   }
 
   .data-value,
@@ -70,7 +83,7 @@
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #F5F8FB;
+    background: #F1F5F9;
   }
   ::-webkit-scrollbar-thumb {
     background: #CBD5E1;
@@ -103,13 +116,54 @@
 .gov-card {
   background-color: #FFFFFF;
   border: 1px solid var(--border-pale);
-  border-radius: 8px;
+  border-radius: 10px;
   box-shadow: var(--shadow-subtle);
-  transition: border-color 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .gov-card:hover {
-  border-color: #B5C6D8;
+  border-color: #BACEDB;
+  box-shadow: var(--shadow-card);
+}
+
+.gov-card-interactive {
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-pale);
+  border-radius: 10px;
+  box-shadow: var(--shadow-subtle);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.gov-card-interactive:hover {
+  border-color: var(--official-blue);
+  box-shadow: 0 6px 18px -3px rgba(19, 90, 156, 0.12);
+  transform: translateY(-1px);
+}
+
+/* Command Center Executive Hero Card */
+.gov-hero-command {
+  background: linear-gradient(135deg, #07162C 0%, #0B1F3A 55%, #102F57 100%);
+  color: #FFFFFF;
+  border: 1px solid #1D4373;
+  box-shadow: var(--shadow-command);
+  position: relative;
+  overflow: hidden;
+}
+
+.gov-hero-command::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(rgba(244, 166, 42, 0.08) 1px, transparent 1px),
+    radial-gradient(rgba(19, 90, 156, 0.15) 1px, transparent 1px);
+  background-size: 24px 24px, 48px 48px;
+  background-position: 0 0, 12px 12px;
+  pointer-events: none;
 }
 
 .gov-card.gov-card-dark,
@@ -117,15 +171,15 @@
 .gov-card[class*="bg-navy"] {
   background-color: #0B1F3A !important;
   color: #FFFFFF !important;
-  border: 1px solid #135A9C !important;
+  border: 1px solid #183C6C !important;
 }
 
 .gov-card-dark {
   background-color: #0B1F3A !important;
   color: #FFFFFF !important;
-  border: 1px solid #135A9C !important;
-  border-radius: 8px;
-  box-shadow: var(--shadow-subtle);
+  border: 1px solid #183C6C !important;
+  border-radius: 10px;
+  box-shadow: var(--shadow-card);
 }
 
 /* High Contrast Mode */
@@ -133,19 +187,34 @@
   --clean-bg: #FFFFFF;
   --text-charcoal: #000000;
   --text-slate: #17202A;
-  --border-pale: #0B1F3A;
+  --border-pale: #000000;
   color: #000000 !important;
 }
 
-.high-contrast .gov-card {
-  border: 2px solid #0B1F3A !important;
+.high-contrast .gov-card,
+.high-contrast .gov-hero-command {
+  border: 2px solid #000000 !important;
+  box-shadow: none !important;
 }
 
-/* Subtle Topographic / Geographic Grid Pattern for Hero */
-.topo-pattern {
-  background-color: #F5F8FB;
-  background-image: radial-gradient(#D9E2EC 1px, transparent 1px);
-  background-size: 20px 20px;
+/* Radar pulse animation for live telemetry */
+@keyframes liveRadarPing {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(22, 128, 74, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(22, 128, 74, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(22, 128, 74, 0);
+  }
+}
+
+.live-radar-indicator {
+  animation: liveRadarPing 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
 }
 
 /* Clean accessible Leaflet map */
@@ -167,10 +236,10 @@
   background: #0B1F3A !important;
   border: 1px solid #D9E2EC !important;
   color: #FFFFFF !important;
-  border-radius: 4px !important;
+  border-radius: 6px !important;
   font-family: var(--font-body) !important;
   font-size: 12px !important;
-  box-shadow: 0 2px 6px rgba(11, 31, 58, 0.15) !important;
+  box-shadow: 0 4px 12px rgba(11, 31, 58, 0.2) !important;
 }
 
 /* Utility to hide scrollbars cleanly */
@@ -195,8 +264,8 @@
   aside,
   nav,
   #government-portal-footer,
-  #national-safety-header,
-  #rolling-ticker-bar,
+  #national-government-portal-header,
+  #permanent-rolling-headlines-ticker,
   .print\\:hidden,
   button:not(.print-keep) {
     display: none !important;
@@ -215,7 +284,6 @@
     border: none !important;
   }
 
-  /* Force clean black/white high-contrast readability */
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;

@@ -17,7 +17,7 @@ interface NavbarProps {
   selectedCity: CityData;
   onOpenCitySelector: () => void;
   onRefreshTelemetry?: () => void;
-  onTriggerSOS: () => void;
+  onTriggerSOS: (type?: any) => void;
   onOpenTriage: () => void;
   onOpenPushSettings?: () => void;
   onOpenHealthReport?: () => void;
@@ -29,6 +29,8 @@ interface NavbarProps {
   onAnnounceAlert?: () => void;
   isDrillModeActive?: boolean;
   onToggleDrillMode?: () => void;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = (props) => {
@@ -57,6 +59,8 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
       onOpenMobileMenu={props.onOpenMobileMenu}
       isDrillModeActive={props.isDrillModeActive}
       onToggleDrillMode={props.onToggleDrillMode}
+      isFullscreen={props.isFullscreen}
+      onToggleFullscreen={props.onToggleFullscreen}
     />
   );
 };

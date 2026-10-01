@@ -96,8 +96,7 @@ export const ResourcesDataView: React.FC<ResourcesDataViewProps> = ({ language }
         'Maintain daily on-site heat stress monitoring logs using calibrated WBGT meters.',
         'Provide breathable, high-visibility cotton protective headwear and neck shades.'
       ],
-      fullTextContent: `GOVERNMENT OF INDIA
-MINISTRY OF LABOUR & EMPLOYMENT
+      fullTextContent: `NATIONAL OCCUPATIONAL SAFETY & HEALTH COUNCIL
 DIRECTORATE GENERAL FACTORY ADVICE SERVICE & LABOUR INSTITUTES (DGFASLI)
 CIRCULAR NO: DGFASLI/OSH/2026/CIR-14
 
@@ -153,9 +152,7 @@ Failure to comply shall attract immediate prosecution under Section 92 of the Fa
         'Ensure continuous cardiac telemetry and pulse oximetry monitoring for severe cases.',
         'Stock emergency anticonvulsants (Lorazepam / Midazolam) for heat-induced status epilepticus.'
       ],
-      fullTextContent: `GOVERNMENT OF INDIA
-MINISTRY OF HEALTH & FAMILY WELFARE
-NATIONAL CENTRE FOR DISEASE CONTROL (NCDC)
+      fullTextContent: `NATIONAL CENTRE FOR DISEASE CONTROL (NCDC)
 NATIONAL PROGRAMME ON CLIMATE CHANGE & HUMAN HEALTH (NPCCHH)
 DOCUMENT REF: NCDC/NPCCHH/2026/SOP-09
 
@@ -208,8 +205,7 @@ All cases must be uploaded to the IHIP Heat-Related Illness portal daily by 18:0
         'Inspect public water kiosks (piaus) and refill municipal cisterns twice daily.'
       ],
       fullTextContent: `NATIONAL DISASTER MANAGEMENT AUTHORITY (NDMA)
-GOVERNMENT OF INDIA
-NATIONAL GUIDELINES FOR PREPARATION OF ACTION PLAN - PREVENTION AND MANAGEMENT OF HEAT-WAVE
+NATIONAL HEAT ACTION PLAN FRAMEWORK
 EDITION: 2026 (REVISED MASTER FRAMEWORK)
 
 1. STATUTORY BACKING
@@ -251,7 +247,7 @@ Prepared pursuant to Section 6(2)(i) of the Disaster Management Act, 2005.
         'Issue immediate Special Weather Bulletins to NDMA, State SDMAs, and Chief Secretaries.'
       ],
       fullTextContent: `INDIA METEOROLOGICAL DEPARTMENT (IMD)
-MINISTRY OF EARTH SCIENCES, GOVERNMENT OF INDIA
+BIOMETEOROLOGICAL DIVISION
 STANDARD OPERATING PROCEDURE (SOP) FOR HEAT-HEALTH WARNING SERVICES
 VERSION: 3.2 (OPERATIONAL COMPENDIUM)
 
@@ -393,22 +389,30 @@ All alerts transmitted via CAP-India to NDMA, Telecom Service Providers, and Sta
   return (
     <div className="space-y-6 pb-12">
       
-      {/* Header */}
-      <div className="rounded-xl p-5 sm:p-6 bg-[#0B1F3A] text-white border border-[#135A9C] shadow-md space-y-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[10px] font-mono uppercase bg-[#135A9C] text-white px-2.5 py-0.5 rounded font-bold tracking-wider">
+      {/* Executive Command Header */}
+      <div className="rounded-2xl p-6 sm:p-8 gov-hero-command border border-[#1E4373] text-white shadow-lg space-y-3 relative overflow-hidden">
+        {/* Ashoka Chakra Watermark */}
+        <div 
+          className="absolute -right-10 -bottom-12 w-64 h-64 opacity-[0.06] pointer-events-none select-none"
+          aria-hidden="true"
+        >
+          <Database className="w-full h-full text-white" />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 relative z-10">
+          <span className="text-[10px] font-mono uppercase bg-[#135A9C] text-white px-2.5 py-0.5 rounded-full font-bold tracking-wider shadow-xs">
             SCIENTIFIC & DATA REPOSITORY
           </span>
-          <span className="text-xs text-[#F4A62A] font-mono font-medium flex items-center gap-1">
-            • Open Government Data & Statutory Policies
+          <span className="text-xs text-[#E5A93C] font-mono font-bold flex items-center gap-1">
+            · Open Government Data & Statutory Policies
           </span>
         </div>
         
-        <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight relative z-10">
           {isHindi ? 'राष्ट्रीय ताप डेटा, आधिकारिक नीतियां एवं संसाधन' : 'National Heat Data, Official Guidelines & Technical Resources'}
         </h1>
         
-        <p className="text-xs sm:text-sm text-[#E2E8F0] font-normal leading-relaxed max-w-4xl">
+        <p className="text-xs sm:text-sm text-[#93C5FD] font-normal leading-relaxed relative z-10 max-w-3xl">
           {isHindi 
             ? 'शोधकर्ताओं, नीति निर्माताओं एवं नागरिकों के लिए आधिकारिक ओपन डेटा, एपीआई एवं दिशा-निर्देश' 
             : 'Open access repositories, statutory workplace curfews, hospital clinical triage, biometeorological standards, and district heat action plan documentation.'}

@@ -85,24 +85,32 @@ export const DistrictOperationsView: React.FC<DistrictOperationsViewProps> = ({
   return (
     <div className="space-y-6 pb-12">
       
-      {/* Header Banner */}
-      <div className="rounded-xl p-5 sm:p-6 bg-[#0B1F3A] text-white border border-[#135A9C] shadow-md">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Header Banner - Executive DEOC Command Center */}
+      <div className="rounded-2xl p-5 sm:p-6 gov-hero-command border border-[#1E4373] text-white shadow-lg relative overflow-hidden">
+        {/* Subtle Watermark */}
+        <div 
+          className="absolute -right-8 -bottom-10 w-64 h-64 opacity-[0.05] pointer-events-none select-none"
+          aria-hidden="true"
+        >
+          <Building2 className="w-full h-full text-white" />
+        </div>
+
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono uppercase bg-[#135A9C] px-2 py-0.5 rounded font-bold text-white">
-                OFFICIAL OPERATIONS LAYER
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] font-mono uppercase bg-[#135A9C] px-2.5 py-0.5 rounded-full font-bold text-white shadow-xs">
+                DISTRICT OPERATIONS LAYER
               </span>
-              <span className="text-xs text-[#F4A62A] font-mono flex items-center gap-1 font-semibold">
+              <span className="text-xs text-[#E5A93C] font-mono flex items-center gap-1.5 font-bold">
                 <ShieldAlert className="w-3.5 h-3.5" />
                 NDMA Heat Action Plan (HAP) Level 3 Active
               </span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-white mt-1">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-white mt-1.5 tracking-tight">
               {selectedCity.name} {isHindi ? 'जिला आपातकालीन संचालन केंद्र' : 'District Emergency Operations Center (DEOC)'}
             </h1>
-            <p className="text-xs sm:text-sm text-[#E2E8F0] mt-1 font-normal">
-              {selectedCity.state} • Control Node: DEOC-{selectedCity.id.toUpperCase()}-01 • Duty Incident Commander: District Magistrate
+            <p className="text-xs sm:text-sm text-[#93C5FD] mt-1 font-normal">
+              {selectedCity.state} · Control Node: DEOC-{selectedCity.id.toUpperCase()}-01 · Duty Incident Commander: District Magistrate
             </p>
           </div>
 
@@ -111,21 +119,21 @@ export const DistrictOperationsView: React.FC<DistrictOperationsViewProps> = ({
               <button
                 id="district-sign-in-officer-btn"
                 onClick={handleOpenAuth}
-                className="px-4 py-2 rounded bg-[#135A9C] hover:bg-[#0f487d] text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
+                className="px-4 py-2 rounded-lg bg-[#E5A93C] hover:bg-[#D99B26] text-[#07162C] text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition-all hover:scale-[1.02]"
               >
-                <Lock className="w-3.5 h-3.5 text-[#F4A62A]" />
+                <Lock className="w-3.5 h-3.5 text-[#07162C]" />
                 <span>{isHindi ? 'अधिकारी लॉगिन करें' : 'Sign In as Officer'}</span>
               </button>
             ) : (
               <div className="flex items-center gap-2">
-                <span className="px-3 py-1.5 rounded bg-[#16804A] text-white text-xs font-semibold flex items-center gap-1">
+                <span className="px-3 py-1.5 rounded-lg bg-[#16804A] text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs border border-green-400/40">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>Authorized Officer Mode</span>
                 </span>
                 {onLockAdminSession && (
                   <button
                     onClick={onLockAdminSession}
-                    className="px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 text-white text-xs font-medium border border-white/20 transition-colors cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-medium border border-white/20 transition-colors cursor-pointer"
                   >
                     Lock Session
                   </button>
