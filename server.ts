@@ -171,6 +171,123 @@ app.get('/api/tts', async (req, res) => {
   }
 });
 
+// AI Call Assistant Dialogue & Emergency Intent Triage Endpoint
+app.post('/api/ai-call-agent', async (req, res) => {
+  try {
+    const { userInput, language = 'en', cityName = 'Unnao', temp = 42, history = [] } = req.body;
+
+    const systemPrompt = `You are "HeatShield AI Safety Dispatcher", the official 24x7 automated emergency voice calling assistant for India's National Heat Health Early Warning System (NHHEWS).
+A severe heatwave alert is currently triggered in ${cityName} with temperature at ${temp}°C.
+
+Your job is to assist citizens over an automated voice call.
+When they speak or press IVR options, evaluate their immediate emergency needs:
+1. Hospital bed / Heat stroke emergency triage bed reservation
+2. Nearest municipal cooling shelter / air-conditioned refuge & day pass
+3. Emergency clean drinking water / ORS tanker bowser dispatch
+4. 108 Emergency Ambulance & hyperthermia mobile rescue unit
+5. Doctor tele-triage / heat illness medical advisory
+6. Safe status / citizen does not require emergency help
+
+Return ONLY a valid JSON object with the following schema:
+{
+  "textEn": "Concise, compassionate, crystal-clear spoken response in English (under 35 words)",
+  "textHi": "Concise, compassionate, crystal-clear spoken response in Hindi Devanagari (under 35 words)",
+  "intent": "RESERVE_HOSPITAL" | "RESERVE_SHELTER" | "WATER_TANKER" | "AMBULANCE_108" | "DOCTOR_CONSULT" | "MARK_SAFE" | "YES_HELP" | "GENERAL_QUERY",
+  "action": "NONE" | "BOOK_HOSPITAL" | "BOOK_SHELTER" | "DISPATCH_TANKER" | "DISPATCH_AMBULANCE" | "CONNECT_DOCTOR" | "LOG_SAFE"
+}
+
+Ensure the responses are brief and suitable for rapid voice synthesis over telephone.`;
+
+    try {
+      const ai = getAIClient();
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.8-flash',
+        contents: [
+          { role: 'user', parts: [{ text: `${systemPrompt}\n\nCitizen said: "${userInput || 'Hello, I need assistance'}"` }] }
+        ],
+        config: {
+          responseMimeType: 'application/json',
+          temperature: 0.2,
+        }
+      });
+
+      const responseText = response.text?.trim();
+      if (responseText) {
+        const parsed = JSON.parse(responseText);
+        return res.json(parsed);
+      }
+    } catch (aiErr) {
+      console.warn('Gemini AI Call Agent fallback:', aiErr);
+    }
+
+    // High quality deterministic fallback if AI client unavailable
+    const lowerInput = (userInput || '').toLowerCase();
+    if (lowerInput.includes('hospital') || lowerInput.includes('bed') || lowerInput.includes('stroke') || lowerInput.includes('अस्पताल') || lowerInput.includes('इलाज') || lowerInput === '1') {
+      return res.json({
+        textEn: `I am reserving an emergency heat-stroke bed at the nearest Trauma Center in ${cityName}. Your reservation token is generated.`,
+        textHi: `${cityName} के निकटतम ट्रॉमा सेंटर में आपका आपातकालीन हीट-स्ट्रोक बेड आरक्षित किया जा रहा है। टोकन जारी कर दिया गया है।`,
+        intent: 'RESERVE_HOSPITAL',
+        action: 'BOOK_HOSPITAL'
+      });
+    }
+
+    if (lowerInput.includes('shelter') || lowerInput.includes('cooling') || lowerInput.includes('center') || lowerInput.includes('शरण') || lowerInput.includes('आश्रय') || lowerInput === '2') {
+      return res.json({
+        textEn: `Reserving your priority day pass for the nearest Municipal AC Cooling Shelter in ${cityName} with hydration and rest facilities.`,
+        textHi: `${cityName} के निकटतम वातानुकूलित शीतलन केंद्र में आपका डे-पास आरक्षित किया जा रहा है।`,
+        intent: 'RESERVE_SHELTER',
+        action: 'BOOK_SHELTER'
+      });
+    }
+
+    if (lowerInput.includes('water') || lowerInput.includes('tanker') || lowerInput.includes('ors') || lowerInput.includes('पानी') || lowerInput.includes('टैंकर') || lowerInput === '3') {
+      return res.json({
+        textEn: `Emergency drinking water and ORS tanker bowser has been routed to your registered ward in ${cityName}.`,
+        textHi: `आपके वार्ड में आपातकालीन पेयजल और ओआरएस टैंकर रवाना कर दिया गया है।`,
+        intent: 'WATER_TANKER',
+        action: 'DISPATCH_TANKER'
+      });
+    }
+
+    if (lowerInput.includes('ambulance') || lowerInput.includes('108') || lowerInput.includes('serious') || lowerInput.includes('एम्बुलेंस') || lowerInput.includes('गंभीर') || lowerInput === '4') {
+      return res.json({
+        textEn: `Emergency 108 Ice-Bath Ambulance unit dispatched to your location. Keep phone line clear.`,
+        textHi: `१०८ आइस-बाथ एम्बुलेंस आपके स्थान के लिए रवाना कर दी गई है। कृपया फोन खुला रखें।`,
+        intent: 'AMBULANCE_108',
+        action: 'DISPATCH_AMBULANCE'
+      });
+    }
+
+    if (lowerInput.includes('doctor') || lowerInput.includes('consult') || lowerInput.includes('सलाह') || lowerInput.includes('डॉक्टर') || lowerInput === '5') {
+      return res.json({
+        textEn: `Connecting you to the 24x7 Government Heat Emergency Tele-Doctor triage line.`,
+        textHi: `आपको २४x७ सरकारी हीट इमरजेंसी टेली-डॉक्टर परामर्श से जोड़ा जा रहा है।`,
+        intent: 'DOCTOR_CONSULT',
+        action: 'CONNECT_DOCTOR'
+      });
+    }
+
+    if (lowerInput.includes('safe') || lowerInput.includes('fine') || lowerInput.includes('no help') || lowerInput.includes('ठीक') || lowerInput.includes('सुरक्षित') || lowerInput.includes('नहीं') || lowerInput === '9') {
+      return res.json({
+        textEn: `Thank you for confirming your safety. Please stay hydrated and avoid midday sunlight. HeatShield AI is on standby.`,
+        textHi: `आपकी सुरक्षा पुष्टि के लिए धन्यवाद। कृपया धूप से बचें और पानी पीते रहें। हीटशील्ड सदैव उपलब्ध है।`,
+        intent: 'MARK_SAFE',
+        action: 'LOG_SAFE'
+      });
+    }
+
+    return res.json({
+      textEn: `HeatShield Emergency Safety Line active for ${cityName}. Please press 1 for Hospital Bed, 2 for Cooling Shelter, 3 for Water Tanker, or speak your request.`,
+      textHi: `${cityName} के लिए हीटशील्ड आपातकालीन लाइन सक्रिय है। अस्पताल बेड के लिए १, शीतलन केंद्र के लिए २, जल टैंकर के लिए ३ दबाएं।`,
+      intent: 'YES_HELP',
+      action: 'NONE'
+    });
+  } catch (agentErr: any) {
+    console.error('Error in /api/ai-call-agent:', agentErr);
+    return res.status(500).json({ error: agentErr.message || 'Call agent processing error' });
+  }
+});
+
 // Explicit JSON 404 for any unregistered /api routes so they do not return HTML
 app.all('/api/*', (req, res) => {
   res.status(404).json({ error: `API endpoint ${req.method} ${req.originalUrl} not found` });

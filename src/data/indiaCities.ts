@@ -223,8 +223,8 @@ export const INDIAN_CITIES: CityData[] = [
       solarRadiativeLoad: 1.34,
       peakWindowStart: '11:30',
       peakWindowEnd: '17:00',
-      grapStage: 'GRAP STAGE IV (SEVERE HEAT DOME ALERT)',
-      riskLevel: 'HIGH',
+      grapStage: 'GRAP STAGE I (ADVISORY)',
+      riskLevel: 'MODERATE',
     },
     coolingFacilities: [
       {
@@ -372,8 +372,8 @@ export const INDIAN_CITIES: CityData[] = [
       solarRadiativeLoad: 1.28,
       peakWindowStart: '12:00',
       peakWindowEnd: '16:30',
-      grapStage: 'AMC HEAT ACTION PLAN - RED ALERT',
-      riskLevel: 'HIGH',
+      grapStage: 'HEAT MONITORING LEVEL 1',
+      riskLevel: 'MODERATE',
     },
     coolingFacilities: [
       {
@@ -828,8 +828,8 @@ export const INDIAN_CITIES: CityData[] = [
       solarRadiativeLoad: 1.29,
       peakWindowStart: '12:00',
       peakWindowEnd: '16:30',
-      grapStage: 'UP SDMA - STAGE IV CURFEW',
-      riskLevel: 'HIGH',
+      grapStage: 'HEAT MONITORING LEVEL 1',
+      riskLevel: 'MODERATE',
     },
     coolingFacilities: [
       {
@@ -1104,8 +1104,8 @@ export const INDIAN_CITIES: CityData[] = [
       solarRadiativeLoad: 1.16,
       peakWindowStart: '12:00',
       peakWindowEnd: '16:00',
-      grapStage: 'GCC HEAT ACTION PLAN - ORANGE ALERT',
-      riskLevel: 'HIGH',
+      grapStage: 'HEAT MONITORING LEVEL 1',
+      riskLevel: 'MODERATE',
     },
     coolingFacilities: [
       {
@@ -1593,8 +1593,8 @@ export const INDIAN_CITIES: CityData[] = [
       solarRadiativeLoad: 1.26,
       peakWindowStart: '12:00',
       peakWindowEnd: '16:30',
-      grapStage: 'UP SDMA - STAGE IV CURFEW',
-      riskLevel: 'HIGH',
+      grapStage: 'HEAT MONITORING LEVEL 1',
+      riskLevel: 'MODERATE',
     },
     coolingFacilities: [
       {

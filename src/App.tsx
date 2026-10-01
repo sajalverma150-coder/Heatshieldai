@@ -23,11 +23,17 @@ import { HealthReportModal } from './components/modals/HealthReportModal';
 import { PushNotificationSettingsModal } from './components/modals/PushNotificationSettingsModal';
 import { AdminAuthModal } from './components/modals/AdminAuthModal';
 import { AdminLogoutModal } from './components/modals/AdminLogoutModal';
+import { AiCallAssistantModal } from './components/modals/AiCallAssistantModal';
+import { AiCallAssistantSettingsModal } from './components/modals/AiCallAssistantSettingsModal';
 import { HydrationAlertToast } from './components/HydrationAlertToast';
 import { PushNotificationBanner } from './components/PushNotificationBanner';
 import { HeatwaveDrillBanner } from './components/HeatwaveDrillBanner';
 import { RollingHeadlinesTicker } from './components/RollingHeadlinesTicker';
 import { getTodayDateString, checkAndResetDailyHydration } from './utils/dateUtils';
+import { 
+  loadCallAssistantSettings, 
+  CallAssistantSettings 
+} from './services/aiCallAssistantService';
 import { 
   DRILL_SCENARIOS, 
   DrillScenario, 
@@ -207,6 +213,46 @@ export function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [userGpsCoords, setUserGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  // AI Voice Call Assistant State
+  const [isAiCallModalOpen, setIsAiCallModalOpen] = useState<boolean>(false);
+  const [isAiCallSettingsOpen, setIsAiCallSettingsOpen] = useState<boolean>(false);
+  const [autoStartAiInCall, setAutoStartAiInCall] = useState<boolean>(false);
+  const [callSettings, setCallSettings] = useState<CallAssistantSettings>(() => loadCallAssistantSettings());
+  const lastAutoCallRef = React.useRef<number>(Date.now());
+
+  // Sync settings when modified
+  useEffect(() => {
+    const handleSettingsUpdate = (e: any) => {
+      setCallSettings(e.detail || loadCallAssistantSettings());
+    };
+    window.addEventListener('heatshield_settings_changed', handleSettingsUpdate);
+    return () => window.removeEventListener('heatshield_settings_changed', handleSettingsUpdate);
+  }, []);
+
+  // Automated heatwave emergency outbound call trigger:
+  // ONLY fires when live temperature actually goes up to severe heat levels (>= 40°C or WBGT >= 31°C)
+  useEffect(() => {
+    if (!callSettings.autoCallEnabled) return;
+
+    // Must be genuinely elevated live temperature
+    const isLiveTempElevated = 
+      (weather.dryBulbTemp >= 40 && weather.dryBulbTemp >= callSettings.triggerTempThreshold) || 
+      (weather.wbgt >= 31 && weather.wbgt >= callSettings.triggerWbgtThreshold);
+
+    if (!isLiveTempElevated) return;
+
+    const now = Date.now();
+    // 15-minute cooldown between automated outbound safety calls to prevent annoyance
+    if (now - lastAutoCallRef.current > 15 * 60 * 1000) {
+      lastAutoCallRef.current = now;
+      const callTimer = setTimeout(() => {
+        setAutoStartAiInCall(false); // Play realistic ringing screen
+        setIsAiCallModalOpen(true);
+      }, 3000);
+      return () => clearTimeout(callTimer);
+    }
+  }, [weather.riskLevel, weather.dryBulbTemp, weather.wbgt, selectedCity.id, callSettings]);
 
   // Monitor browser full-screen state
   useEffect(() => {
@@ -529,6 +575,10 @@ export function App() {
             onClearNavigationFacility={() => setActiveNavFacility(null)}
             onSelectCity={handleSelectCity}
             language={language}
+            onOpenAiCall={() => {
+              setAutoStartAiInCall(false);
+              setIsAiCallModalOpen(true);
+            }}
           />
         );
       case 'guidance':
@@ -585,6 +635,10 @@ export function App() {
             onLockAdminSession={handleLockAdminSession}
             onOpenCitySelector={() => setIsCitySelectorOpen(true)}
             onTriggerSOS={() => setIsSOSOpen(true)}
+            onOpenAiCall={() => {
+              setAutoStartAiInCall(false);
+              setIsAiCallModalOpen(true);
+            }}
           />
         );
       case 'profile':
@@ -635,6 +689,10 @@ export function App() {
           wbgt={weather.wbgt}
           onViewSafetyGuidance={() => setCurrentTab('health-guidance')}
           language={language}
+          onTriggerAiCall={() => {
+            setAutoStartAiInCall(false);
+            setIsAiCallModalOpen(true);
+          }}
         />
 
         {/* Top Header */}
@@ -666,6 +724,11 @@ export function App() {
           onToggleDrillMode={handleToggleDrillMode}
           isFullscreen={isFullscreen}
           onToggleFullscreen={handleToggleFullscreen}
+          onOpenAiCall={() => {
+            setAutoStartAiInCall(false);
+            setIsAiCallModalOpen(true);
+          }}
+          onOpenAiCallSettings={() => setIsAiCallSettingsOpen(true)}
         />
 
         {/* Heatwave Emergency Drill Simulation Banner (Demonstration / Judge Mode) */}
@@ -710,6 +773,11 @@ export function App() {
             onLockAdminSession={handleLockAdminSession}
             isDrillModeActive={isDrillModeActive}
             onToggleDrillMode={handleToggleDrillMode}
+            onOpenAiCall={() => {
+              setAutoStartAiInCall(false);
+              setIsAiCallModalOpen(true);
+            }}
+            onOpenAiCallSettings={() => setIsAiCallSettingsOpen(true)}
           />
 
           {/* Dynamic Content Area: fluid edge-to-edge full width without blank white margins */}
@@ -751,6 +819,10 @@ export function App() {
           isAdminAuthenticated={isAdminAuthenticated}
           onOpenAdminAuthModal={() => setIsAdminAuthOpen(true)}
           onLockAdminSession={handleLockAdminSession}
+          onOpenAiCall={() => {
+            setAutoStartAiInCall(false);
+            setIsAiCallModalOpen(true);
+          }}
         />
 
       {/* Admin Authentication & Municipal ID/Password Modal */}
@@ -847,6 +919,31 @@ export function App() {
       <PushNotificationBanner
         onLogWater={handleLogWater}
         onViewGuidance={() => setCurrentTab('health-guidance')}
+      />
+
+      {/* AI Emergency Voice Call Assistant Modal (Ringing / Connected / In-Call IVR) */}
+      <AiCallAssistantModal
+        isOpen={isAiCallModalOpen}
+        onClose={() => setIsAiCallModalOpen(false)}
+        weather={weather}
+        city={selectedCity}
+        userProfile={userProfile}
+        language={language}
+        autoStartInCall={autoStartAiInCall}
+      />
+
+      {/* AI Call Assistant Settings & Test Call Hub */}
+      <AiCallAssistantSettingsModal
+        isOpen={isAiCallSettingsOpen}
+        onClose={() => setIsAiCallSettingsOpen(false)}
+        city={selectedCity}
+        weather={weather}
+        userProfile={userProfile}
+        language={language}
+        onTriggerTestCall={() => {
+          setAutoStartAiInCall(false); // Play realistic ringing screen
+          setIsAiCallModalOpen(true);
+        }}
       />
 
       </div>

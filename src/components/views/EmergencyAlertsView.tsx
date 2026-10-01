@@ -25,6 +25,7 @@ import { ACTIVE_EMERGENCY_BROADCAST } from '../../data/mockData';
 import { CityData } from '../../data/indiaCities';
 import { speakEmergencyAlert, stopEmergencyAlertSpeech } from '../../services/hindiSpeechService';
 import { useAppTranslation } from '../../i18n/translations';
+import { ActiveAssistanceTicketsBanner } from '../ActiveAssistanceTicketsBanner';
 
 interface EmergencyAlertsViewProps {
   language: LanguageCode;
@@ -36,6 +37,7 @@ interface EmergencyAlertsViewProps {
   onLockAdminSession?: () => void;
   onOpenCitySelector?: () => void;
   onTriggerSOS: () => void;
+  onOpenAiCall?: () => void;
 }
 
 export const EmergencyAlertsView: React.FC<EmergencyAlertsViewProps> = ({
@@ -48,6 +50,7 @@ export const EmergencyAlertsView: React.FC<EmergencyAlertsViewProps> = ({
   onLockAdminSession,
   onOpenCitySelector,
   onTriggerSOS,
+  onOpenAiCall,
 }) => {
   const t = useAppTranslation(language);
   const isHindi = language === 'hi';
@@ -253,6 +256,52 @@ export const EmergencyAlertsView: React.FC<EmergencyAlertsViewProps> = ({
 
   return (
     <div id="emergency-alerts-view" className="space-y-4 pb-8">
+      
+      {/* Active Heat Assistance Tickets & Reservation Passes */}
+      <ActiveAssistanceTicketsBanner language={language} onOpenCallModal={onOpenAiCall} />
+
+      {/* AI Emergency Voice Call Assistant Interactive Dispatch Hotline */}
+      {onOpenAiCall && (
+        <section className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#0B2545] via-[#0D325E] to-[#12427A] border-2 border-[#38BDF8]/60 text-white shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#38BDF8]/10 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10">
+            <div className="flex items-start sm:items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-[#0284C7] flex items-center justify-center text-white shrink-0 shadow-lg shadow-[#0284C7]/40 ring-4 ring-white/10 animate-pulse">
+                <PhoneCall className="w-6 h-6" />
+              </div>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#10B981] text-[#064E3B] uppercase tracking-wider">
+                    24x7 AUTOMATED DISPATCHER
+                  </span>
+                  <span className="text-[11px] font-mono text-[#7DD3FC]">
+                    {cityName} • {currentTemp.toFixed(1)}°C
+                  </span>
+                </div>
+                <h3 className="text-lg sm:text-xl font-headline font-bold text-white">
+                  {isHindi ? 'एआई आपातकालीन कॉल सहायक (स्वचालित सुरक्षा जांच एवं आरक्षण)' : 'AI Emergency Voice Call Assistant & Instant Reservation Hotline'}
+                </h3>
+                <p className="text-xs text-[#CBD5E1] max-w-2xl">
+                  {isHindi 
+                    ? 'लू अलर्ट के समय एआई आपको सीधे कॉल करके आपातकालीन अस्पताल आईसीयू बेड, नगर पालिका शीतलन केंद्र डे-पास, पेयजल टैंकर या १०८ एम्बुलेंस तुरंत आरक्षित करता है।' 
+                    : 'When severe heatwaves trigger, the AI voice assistant automatically calls citizens to triage emergency needs and instantly reserves hospital beds, cooling shelter day passes, and water tankers.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              <button
+                onClick={onOpenAiCall}
+                className="py-2.5 px-4 rounded-xl bg-[#38BDF8] hover:bg-[#0284C7] text-[#0A192F] font-mono font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-[#38BDF8]/30 transition-transform active:scale-95 cursor-pointer"
+              >
+                <PhoneCall className="w-4 h-4" />
+                <span>{isHindi ? 'एआई कॉल सहायक शुरू करें' : 'Launch AI Voice Call'}</span>
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
       
       {/* Top Banner: Emergency Broadcasting Status */}
       <section id="emergency-broadcast-status-banner" className="p-4 sm:p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-sm">

@@ -31,6 +31,7 @@ import { InteractiveGisMap } from '../InteractiveGisMap';
 import { GpsNavigationModal } from '../GpsNavigationModal';
 import { LocationAutocomplete } from '../LocationAutocomplete';
 import { LocationSearchResult, calculateGeodesicDistance } from '../../services/locationSearch';
+import { ActiveAssistanceTicketsBanner } from '../ActiveAssistanceTicketsBanner';
 
 interface CoolingFinderViewProps {
   facilities: CoolingFacility[];
@@ -43,6 +44,7 @@ interface CoolingFinderViewProps {
   onClearNavigationFacility?: () => void;
   onSelectCity?: (city: CityData) => void;
   language?: LanguageCode;
+  onOpenAiCall?: () => void;
 }
 
 export const CoolingFinderView: React.FC<CoolingFinderViewProps> = ({
@@ -56,6 +58,7 @@ export const CoolingFinderView: React.FC<CoolingFinderViewProps> = ({
   onClearNavigationFacility,
   onSelectCity,
   language = 'en',
+  onOpenAiCall,
 }) => {
   const isHindi = language === 'hi';
   const [activeCategory, setActiveCategory] = useState<'shelter' | 'triage_hospital'>('shelter');
@@ -191,6 +194,9 @@ export const CoolingFinderView: React.FC<CoolingFinderViewProps> = ({
   return (
     <div id="cooling-finder-screen" className="space-y-4 sm:space-y-6 pb-12">
       
+      {/* Active Heat Assistance Tickets & Reservation Passes */}
+      <ActiveAssistanceTicketsBanner language={language} onOpenCallModal={onOpenAiCall} />
+
       {/* Top Header & Category Switcher */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-900/90 p-4 sm:p-5 rounded-2xl border border-slate-800 shadow-sm">
         <div>

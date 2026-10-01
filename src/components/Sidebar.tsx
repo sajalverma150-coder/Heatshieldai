@@ -32,6 +32,8 @@ export interface SidebarProps {
   onLockAdminSession?: () => void;
   isDrillModeActive?: boolean;
   onToggleDrillMode?: () => void;
+  onOpenAiCall?: () => void;
+  onOpenAiCallSettings?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -44,6 +46,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onTriggerSOS,
   isDrillModeActive,
   onToggleDrillMode,
+  onOpenAiCall,
+  onOpenAiCallSettings,
 }) => {
   const isHindi = language === 'hi';
 
@@ -280,6 +284,44 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           ))}
         </div>
+
+        {/* AI Call Assistant Auto-Active Dispatch Card */}
+        {onOpenAiCall && (
+          <div className="mt-4 p-3 rounded-xl bg-gradient-to-br from-[#0B2347] to-[#081B34] border border-[#1E4D8C] space-y-2 shadow-md">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-white">
+                <span className="w-2 h-2 rounded-full bg-[#4ADE80] animate-pulse" />
+                <span>{isHindi ? 'एआई कॉल सहायक' : 'AI Call Assistant'}</span>
+              </div>
+              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#10B981]/20 text-[#34D399] font-bold">
+                AUTO-ACTIVE
+              </span>
+            </div>
+            <p className="text-[10px] text-[#94A3B8] leading-tight">
+              {isHindi 
+                ? 'लू अलर्ट पर स्वचालित कॉल, अस्पताल बेड व शीतलन केंद्र आरक्षण।' 
+                : 'Automated welfare call & IVR reservation on severe heatwave triggers.'}
+            </p>
+            <div className="flex gap-1.5 pt-0.5">
+              <button
+                onClick={onOpenAiCall}
+                className="flex-1 py-1.5 px-2 rounded-lg bg-[#0284C7] hover:bg-[#0369A1] text-white font-mono font-bold text-[11px] flex items-center justify-center gap-1 transition-transform active:scale-95 cursor-pointer shadow-xs"
+              >
+                <PhoneCall className="w-3 h-3" />
+                <span>{isHindi ? 'कॉल खोलें' : 'Open Caller'}</span>
+              </button>
+              {onOpenAiCallSettings && (
+                <button
+                  onClick={onOpenAiCallSettings}
+                  className="p-1.5 rounded-lg bg-[#0A1D36] hover:bg-[#135A9C] border border-[#1E4373] text-[#94A3B8] hover:text-white cursor-pointer"
+                  title="Call Settings"
+                >
+                  <Radio className="w-3.5 h-3.5 text-[#38BDF8]" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Live System Synchronization & Gateway Node Status */}
         <div className="mt-4 p-2.5 rounded-xl bg-[#040E1B] border border-[#142C4C] space-y-1.5 text-[10px] font-mono">

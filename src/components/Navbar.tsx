@@ -31,6 +31,8 @@ interface NavbarProps {
   onToggleDrillMode?: () => void;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
+  onOpenAiCall?: () => void;
+  onOpenAiCallSettings?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = (props) => {
@@ -61,6 +63,8 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
       onToggleDrillMode={props.onToggleDrillMode}
       isFullscreen={props.isFullscreen}
       onToggleFullscreen={props.onToggleFullscreen}
+      onOpenAiCall={props.onOpenAiCall}
+      onOpenAiCallSettings={props.onOpenAiCallSettings}
     />
   );
 };

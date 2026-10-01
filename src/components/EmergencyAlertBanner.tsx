@@ -12,6 +12,7 @@ interface EmergencyAlertBannerProps {
   endDate?: string;
   onViewSafetyGuidance: () => void;
   onAnnounceAlert?: () => void;
+  onTriggerAiCall?: () => void;
   dryBulbTemp?: number;
   wbgt?: number;
 }
@@ -24,6 +25,7 @@ export const EmergencyAlertBanner: React.FC<EmergencyAlertBannerProps> = ({
   endDate,
   onViewSafetyGuidance,
   onAnnounceAlert,
+  onTriggerAiCall,
   dryBulbTemp,
   wbgt,
 }) => {
@@ -32,13 +34,16 @@ export const EmergencyAlertBanner: React.FC<EmergencyAlertBannerProps> = ({
   const isHindi = language === 'hi';
 
   // Determine whether an active heat alert is warranted
+  // Strictly suppress alerts if temperature is normal; only show if live temp goes up (>= 40°C or WBGT >= 31°C)
   const isElevatedAlert = useMemo(() => {
+    // Normal temperature threshold check
+    if (dryBulbTemp !== undefined && dryBulbTemp < 40 && (wbgt === undefined || wbgt < 31)) {
+      return false;
+    }
     return (
-      nationalRiskLevel === 'HIGH' ||
-      nationalRiskLevel === 'VERY_HIGH' ||
-      nationalRiskLevel === 'EXTREME' ||
       (dryBulbTemp !== undefined && dryBulbTemp >= 40) ||
-      (wbgt !== undefined && wbgt >= 31)
+      (wbgt !== undefined && wbgt >= 31) ||
+      ((nationalRiskLevel === 'EXTREME' || nationalRiskLevel === 'VERY_HIGH') && (dryBulbTemp === undefined || dryBulbTemp >= 38))
     );
   }, [nationalRiskLevel, dryBulbTemp, wbgt]);
 
@@ -157,8 +162,20 @@ export const EmergencyAlertBanner: React.FC<EmergencyAlertBannerProps> = ({
           </div>
         </div>
 
-        {/* Right Actions: Voice Announcement + View Guidance + Dismiss */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Right Actions: AI Call Trigger + Voice Announcement + View Guidance + Dismiss */}
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          {/* AI Emergency Voice Call Assistant Button */}
+          {onTriggerAiCall && (
+            <button
+              onClick={onTriggerAiCall}
+              className="flex items-center gap-1.5 px-2.5 py-1 sm:py-1.5 rounded text-xs font-bold cursor-pointer transition-all bg-gradient-to-r from-[#135A9C] to-[#0284C7] hover:from-[#0E4375] hover:to-[#0369A1] text-white shadow-xs animate-pulse"
+              title={isHindi ? 'एआई आपातकालीन कॉल एवं बेड आरक्षण' : 'AI Safety Call & Hospital Bed / Shelter Reservation'}
+            >
+              <span className="w-2 h-2 rounded-full bg-green-400" />
+              <span>{isHindi ? 'एआई आपातकालीन कॉल' : 'AI Safety Call'}</span>
+            </button>
+          )}
+
           {/* Audio Voice Announcement Button */}
           <button
             onClick={handleSpeak}
