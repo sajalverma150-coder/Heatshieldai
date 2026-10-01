@@ -219,7 +219,7 @@ export function App() {
   const [isAiCallSettingsOpen, setIsAiCallSettingsOpen] = useState<boolean>(false);
   const [autoStartAiInCall, setAutoStartAiInCall] = useState<boolean>(false);
   const [callSettings, setCallSettings] = useState<CallAssistantSettings>(() => loadCallAssistantSettings());
-  const lastAutoCallRef = React.useRef<number>(Date.now());
+  const lastAutoCallRef = React.useRef<number>(0);
 
   // Sync settings when modified
   useEffect(() => {
@@ -230,26 +230,24 @@ export function App() {
     return () => window.removeEventListener('heatshield_settings_changed', handleSettingsUpdate);
   }, []);
 
-  // Automated heatwave emergency outbound call trigger:
-  // ONLY fires when live temperature actually goes up to severe heat levels (>= 40°C or WBGT >= 31°C)
+  // Automated heatwave emergency outbound call trigger
   useEffect(() => {
     if (!callSettings.autoCallEnabled) return;
 
-    // Must be genuinely elevated live temperature
-    const isLiveTempElevated = 
-      (weather.dryBulbTemp >= 40 && weather.dryBulbTemp >= callSettings.triggerTempThreshold) || 
-      (weather.wbgt >= 31 && weather.wbgt >= callSettings.triggerWbgtThreshold);
-
-    if (!isLiveTempElevated) return;
+    const isSevereHeatwave = 
+      weather.riskLevel === 'EXTREME' || 
+      weather.riskLevel === 'VERY_HIGH' || 
+      weather.dryBulbTemp >= callSettings.triggerTempThreshold || 
+      weather.wbgt >= callSettings.triggerWbgtThreshold;
 
     const now = Date.now();
-    // 15-minute cooldown between automated outbound safety calls to prevent annoyance
-    if (now - lastAutoCallRef.current > 15 * 60 * 1000) {
+    // 12-minute cooldown between automated outbound safety calls to prevent spam
+    if (isSevereHeatwave && now - lastAutoCallRef.current > 12 * 60 * 1000) {
       lastAutoCallRef.current = now;
       const callTimer = setTimeout(() => {
         setAutoStartAiInCall(false); // Play realistic ringing screen
         setIsAiCallModalOpen(true);
-      }, 3000);
+      }, 2000);
       return () => clearTimeout(callTimer);
     }
   }, [weather.riskLevel, weather.dryBulbTemp, weather.wbgt, selectedCity.id, callSettings]);
