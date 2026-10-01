@@ -34,13 +34,15 @@ export const EmergencyAlertBanner: React.FC<EmergencyAlertBannerProps> = ({
   const isHindi = language === 'hi';
 
   // Determine whether an active heat alert is warranted
+  // Strictly suppress alerts if temperature is normal; only show if live temp goes up (>= 40°C or WBGT >= 32°C with elevated temp)
   const isElevatedAlert = useMemo(() => {
+    if (dryBulbTemp !== undefined && dryBulbTemp < 40 && (wbgt === undefined || wbgt < 32)) {
+      return false;
+    }
     return (
-      nationalRiskLevel === 'HIGH' ||
-      nationalRiskLevel === 'VERY_HIGH' ||
-      nationalRiskLevel === 'EXTREME' ||
       (dryBulbTemp !== undefined && dryBulbTemp >= 40) ||
-      (wbgt !== undefined && wbgt >= 31)
+      (wbgt !== undefined && wbgt >= 32 && (dryBulbTemp === undefined || dryBulbTemp >= 37)) ||
+      (nationalRiskLevel === 'EXTREME' && (dryBulbTemp === undefined || dryBulbTemp >= 39))
     );
   }, [nationalRiskLevel, dryBulbTemp, wbgt]);
 

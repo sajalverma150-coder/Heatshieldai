@@ -193,7 +193,7 @@ export function dispatchHeatwaveEmergencyPushNotification({
   
   const bodyText = isDrill
     ? `ISSUE: ${activeScenario.issueText}\n\nACTION REQUIRED: ${activeScenario.actionText}`
-    : `ISSUE: Ambient temperature is ${dryBulbTemp}°C and Wet Bulb Globe Temp is ${wbgt}°C (Safe limit: 30°C). Severe risk of heat stroke & organ strain.\n\nACTION REQUIRED: Move to air-cooled facility immediately, hydrate with ORS/water, cease physical labor.`;
+    : `ISSUE: Extreme heatwave conditions detected with ambient temperature ${dryBulbTemp}°C and Wet Bulb Globe Temp ${wbgt}°C. High risk of heat stroke & hyperthermia.\n\nACTION REQUIRED: Move to air-cooled facility immediately, hydrate with ORS/water, cease outdoor physical labor.`;
 
   // 1. Broadcast to In-App Push Notification Banner
   broadcastPushNotification({

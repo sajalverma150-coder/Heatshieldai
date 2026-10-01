@@ -26,12 +26,24 @@ export function calculateWetBulbTemp(T: number, RH: number): number {
 
 /**
  * Estimate Outdoor Wet Bulb Globe Temperature (WBGT)
+ * Uses standard ISO 7243 / Australian BOM approximation:
+ * In shade or night (solarRad <= 20 W/m²): WBGT = 0.7 * Tw + 0.3 * T
+ * In outdoor sun: WBGT = 0.7 * Tw + 0.2 * Tg + 0.1 * T, where Tg models physical solar elevation
  */
-export function calculateWBGT(T: number, RH: number, windSpeedKmH: number, solarRad = 850): number {
+export function calculateWBGT(T: number, RH: number, windSpeedKmH: number, solarRad?: number): number {
   const Tw = calculateWetBulbTemp(T, RH);
-  const windM_S = Math.max(0.2, windSpeedKmH / 3.6);
-  // Approximate globe temperature Tg under solar radiation
-  const Tg = T + (solarRad / 1000) * 12 - (windM_S * 0.8);
+  const windM_S = Math.max(0.3, (windSpeedKmH || 5) / 3.6);
+  const rad = typeof solarRad === 'number' ? Math.max(0, solarRad) : 0;
+
+  if (rad <= 20) {
+    // Night-time or shaded WBGT (ISO 7243 indoor/shaded standard)
+    const wbgt = 0.7 * Tw + 0.3 * T;
+    return Number(wbgt.toFixed(1));
+  }
+
+  // Outdoor solar WBGT: Globe temperature elevation from solar insolation
+  const solarElevation = (rad / 1000) * (9.5 / Math.sqrt(windM_S));
+  const Tg = T + Math.min(10, Math.max(0, solarElevation));
   const wbgt = 0.7 * Tw + 0.2 * Tg + 0.1 * T;
   return Number(wbgt.toFixed(1));
 }
@@ -113,26 +125,26 @@ export async function fetchLiveWeatherFromApi(
   const humidity = Math.round(current.relative_humidity_2m);
   const apparentTemp = Number(current.apparent_temperature.toFixed(1));
   const windSpeed = Number(current.wind_speed_10m.toFixed(1));
-  const solarRadiation = current.direct_normal_irradiance 
-    ? Math.round(current.direct_normal_irradiance) 
-    : fallbackWeather.solarRadiation || 820;
+  const solarRadiation = typeof current.direct_normal_irradiance === 'number'
+    ? Math.max(0, Math.round(current.direct_normal_irradiance))
+    : (fallbackWeather.solarRadiation ?? 0);
 
   const wetBulbTemp = calculateWetBulbTemp(dryBulbTemp, humidity);
   const wbgt = calculateWBGT(dryBulbTemp, humidity, windSpeed, solarRadiation);
   const utci = calculateUTCI(dryBulbTemp, humidity, windSpeed);
   const sweatLossRate = calculateSweatLossRate(apparentTemp, wbgt);
 
-  // Determine risk level & GRAP stage
+  // Determine risk level & GRAP stage (strictly aligned with IMD Heatwave thresholds)
   let riskLevel: 'EXTREME' | 'VERY_HIGH' | 'HIGH' | 'MODERATE' = 'MODERATE';
   let grapStage = 'GRAP STAGE I (ADVISORY)';
 
-  if (wbgt >= 34.0 || apparentTemp >= 48.0) {
+  if (dryBulbTemp >= 45.0 || (wbgt >= 33.5 && dryBulbTemp >= 40.0) || apparentTemp >= 48.0) {
     riskLevel = 'EXTREME';
     grapStage = 'GRAP STAGE IV (CRITICAL CURFEW)';
-  } else if (wbgt >= 32.0 || apparentTemp >= 44.0) {
+  } else if (dryBulbTemp >= 42.0 || (wbgt >= 32.0 && dryBulbTemp >= 38.0) || apparentTemp >= 44.0) {
     riskLevel = 'VERY_HIGH';
     grapStage = 'GRAP STAGE III (EMERGENCY STANDBY)';
-  } else if (wbgt >= 30.0 || apparentTemp >= 40.0) {
+  } else if (dryBulbTemp >= 40.0 || (wbgt >= 31.0 && dryBulbTemp >= 36.0) || apparentTemp >= 42.0) {
     riskLevel = 'HIGH';
     grapStage = 'GRAP STAGE II (YELLOW ALERT)';
   }
@@ -416,7 +428,7 @@ export async function fetchLiveBatchCitiesWeather(
   try {
     const lats = cities.map((c) => c.lat.toFixed(4)).join(',');
     const lngs = cities.map((c) => c.lng.toFixed(4)).join(',');
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m&timezone=auto`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,direct_normal_irradiance&timezone=auto`;
 
     const data = await safeFetchOpenMeteoJson(url);
     if (!data) return {};
@@ -431,14 +443,17 @@ export async function fetchLiveBatchCitiesWeather(
         const humidity = Math.round(item.relative_humidity_2m ?? 65);
         const apparentTemp = Number(item.apparent_temperature?.toFixed(1) ?? dryBulbTemp);
         const windSpeed = Number(item.wind_speed_10m?.toFixed(1) ?? 3.5);
-        const wbgt = calculateWBGT(dryBulbTemp, humidity, windSpeed, 800);
+        const solarRad = typeof item.direct_normal_irradiance === 'number'
+          ? Math.max(0, Math.round(item.direct_normal_irradiance))
+          : 0;
+        const wbgt = calculateWBGT(dryBulbTemp, humidity, windSpeed, solarRad);
 
         let riskLevel: 'EXTREME' | 'VERY_HIGH' | 'HIGH' | 'MODERATE' = 'MODERATE';
-        if (wbgt >= 33.5 || apparentTemp >= 46.0) {
+        if (dryBulbTemp >= 45.0 || (wbgt >= 33.5 && dryBulbTemp >= 40.0) || apparentTemp >= 48.0) {
           riskLevel = 'EXTREME';
-        } else if (wbgt >= 31.5 || apparentTemp >= 42.0) {
+        } else if (dryBulbTemp >= 42.0 || (wbgt >= 32.0 && dryBulbTemp >= 38.0) || apparentTemp >= 44.0) {
           riskLevel = 'VERY_HIGH';
-        } else if (wbgt >= 29.5 || apparentTemp >= 38.0) {
+        } else if (dryBulbTemp >= 40.0 || (wbgt >= 31.0 && dryBulbTemp >= 36.0) || apparentTemp >= 42.0) {
           riskLevel = 'HIGH';
         }
 

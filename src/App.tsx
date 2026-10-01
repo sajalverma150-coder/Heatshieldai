@@ -231,14 +231,17 @@ export function App() {
   }, []);
 
   // Automated heatwave emergency outbound call trigger
+  // Strictly trigger ONLY when live temperature goes up into genuine danger range (>= 40°C)
   useEffect(() => {
     if (!callSettings.autoCallEnabled) return;
 
+    const tempThresh = Math.max(40, callSettings.triggerTempThreshold || 40);
+    const wbgtThresh = Math.max(32, callSettings.triggerWbgtThreshold || 32);
+
     const isSevereHeatwave = 
-      weather.riskLevel === 'EXTREME' || 
-      weather.riskLevel === 'VERY_HIGH' || 
-      weather.dryBulbTemp >= callSettings.triggerTempThreshold || 
-      weather.wbgt >= callSettings.triggerWbgtThreshold;
+      weather.dryBulbTemp >= tempThresh || 
+      (weather.wbgt >= wbgtThresh && weather.dryBulbTemp >= 38) ||
+      (weather.riskLevel === 'EXTREME' && weather.dryBulbTemp >= 40);
 
     const now = Date.now();
     // 12-minute cooldown between automated outbound safety calls to prevent spam
@@ -316,7 +319,7 @@ export function App() {
 
   // Initial load of live weather and batch cities on startup
   useEffect(() => {
-    loadWeatherForCity(INDIAN_CITIES[0], 'live_api');
+    loadWeatherForCity(defaultCity, 'live_api');
     fetchLiveBatchCitiesWeather(INDIAN_CITIES).then((batch) => {
       if (Object.keys(batch).length > 0) {
         setBatchCitiesWeather(batch);
@@ -452,13 +455,38 @@ export function App() {
     };
   }, []);
 
-  // Monitor unsafe readings (temp >= 40°C or WBGT >= 30°C) and trigger actionable push notification
-  const lastAlertTimestampRef = React.useRef<number>(0);
+  // Monitor unsafe readings and trigger push notification ONLY when live temperature actually goes up into heat danger
+  const lastAlertTimestampRef = React.useRef<number>(Date.now());
+  const prevLiveTempRef = React.useRef<number | null>(null);
+  const isFirstMountRef = React.useRef<boolean>(true);
+
   useEffect(() => {
+    // 1. Never send alert on initial website open if temperature is normal
+    if (isFirstMountRef.current) {
+      isFirstMountRef.current = false;
+      prevLiveTempRef.current = weather.dryBulbTemp;
+      return;
+    }
+
+    const prevTemp = prevLiveTempRef.current;
+    const currentTemp = weather.dryBulbTemp;
+    prevLiveTempRef.current = currentTemp;
+
+    // Only send alerts when the live temperature goes up OR drill mode is active
+    const isTempRising = prevTemp === null || currentTemp > prevTemp;
+
+    // Real heatwave criteria according to IMD (min 40°C in plains or WBGT >= 32°C with high ambient >= 38°C)
+    const isExceedingSafeLevel = 
+      isDrillModeActive || 
+      (isTempRising && (
+        currentTemp >= 40 || 
+        (weather.wbgt >= 32 && currentTemp >= 38) || 
+        weather.heatIndex >= 45
+      ));
+
     const now = Date.now();
-    const isExceedingSafeLevel = weather.dryBulbTemp >= 40 || weather.wbgt >= 30 || weather.heatIndex >= 42;
-    // 30-second cooldown between auto threshold dispatches
-    if (isExceedingSafeLevel && now - lastAlertTimestampRef.current > 30000) {
+    // 60-second cooldown between auto threshold dispatches
+    if (isExceedingSafeLevel && now - lastAlertTimestampRef.current > 60000) {
       lastAlertTimestampRef.current = now;
       dispatchHeatwaveEmergencyPushNotification({
         city: selectedCity,
