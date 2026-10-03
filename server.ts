@@ -171,16 +171,15 @@ app.get('/api/tts', async (req, res) => {
   }
 });
 
-// AI Call Assistant Dialogue & Emergency Intent Triage Endpoint
+// AI Call Assistant Dialogue & Emergency Intent Triage Endpoint (Supports Text & Direct Audio Recording)
 app.post('/api/ai-call-agent', async (req, res) => {
   try {
-    const { userInput, language = 'en', cityName = 'Unnao', temp = 42, history = [] } = req.body;
+    const { userInput, audioBase64, mimeType = 'audio/webm', language = 'en', cityName = 'Unnao', temp = 42, history = [] } = req.body;
 
     const systemPrompt = `You are "HeatShield AI Safety Dispatcher", the official 24x7 automated emergency voice calling assistant for India's National Heat Health Early Warning System (NHHEWS).
 A severe heatwave alert is currently triggered in ${cityName} with temperature at ${temp}°C.
 
-Your job is to assist citizens over an automated voice call.
-When they speak or press IVR options, evaluate their immediate emergency needs:
+Your job is to assist citizens over an automated voice call in Hindi, English, or Hinglish, and evaluate their immediate emergency needs:
 1. Hospital bed / Heat stroke emergency triage bed reservation
 2. Nearest municipal cooling shelter / air-conditioned refuge & day pass
 3. Emergency clean drinking water / ORS tanker bowser dispatch
@@ -190,8 +189,9 @@ When they speak or press IVR options, evaluate their immediate emergency needs:
 
 Return ONLY a valid JSON object with the following schema:
 {
-  "textEn": "Concise, compassionate, crystal-clear spoken response in English (under 35 words)",
-  "textHi": "Concise, compassionate, crystal-clear spoken response in Hindi Devanagari (under 35 words)",
+  "spokenText": "The exact transcribed words spoken by the citizen in Hindi Devanagari or English",
+  "textEn": "Concise, compassionate, crystal-clear spoken response in English (under 30 words)",
+  "textHi": "Concise, compassionate, crystal-clear spoken response in Hindi Devanagari (under 30 words)",
   "intent": "RESERVE_HOSPITAL" | "RESERVE_SHELTER" | "WATER_TANKER" | "AMBULANCE_108" | "DOCTOR_CONSULT" | "MARK_SAFE" | "YES_HELP" | "GENERAL_QUERY",
   "action": "NONE" | "BOOK_HOSPITAL" | "BOOK_SHELTER" | "DISPATCH_TANKER" | "DISPATCH_AMBULANCE" | "CONNECT_DOCTOR" | "LOG_SAFE"
 }
@@ -200,10 +200,27 @@ Ensure the responses are brief and suitable for rapid voice synthesis over telep
 
     try {
       const ai = getAIClient();
+      const parts: any[] = [];
+      if (audioBase64) {
+        parts.push({
+          text: `${systemPrompt}\n\nListen carefully to the audio attached below, transcribe what the citizen said into the "spokenText" field, and return the triage JSON.`
+        });
+        parts.push({
+          inlineData: {
+            data: audioBase64,
+            mimeType: mimeType.includes('mp4') ? 'audio/mp4' : (mimeType.includes('wav') ? 'audio/wav' : 'audio/webm'),
+          }
+        });
+      } else {
+        parts.push({
+          text: `${systemPrompt}\n\nCitizen said: "${userInput || 'Hello, I need assistance'}"`
+        });
+      }
+
       const response = await ai.models.generateContent({
-        model: 'gemini-3.8-flash',
+        model: 'gemini-2.5-flash',
         contents: [
-          { role: 'user', parts: [{ text: `${systemPrompt}\n\nCitizen said: "${userInput || 'Hello, I need assistance'}"` }] }
+          { role: 'user', parts }
         ],
         config: {
           responseMimeType: 'application/json',
@@ -217,7 +234,7 @@ Ensure the responses are brief and suitable for rapid voice synthesis over telep
         return res.json(parsed);
       }
     } catch (aiErr) {
-      console.warn('Gemini AI Call Agent fallback:', aiErr);
+      console.warn('Gemini AI Call Agent audio/text error:', aiErr);
     }
 
     // High quality deterministic fallback if AI client unavailable
