@@ -2,21 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Phone, 
   PhoneOff, 
-  Mic, 
-  MicOff, 
   Volume2, 
   VolumeX, 
-  ShieldAlert, 
-  Building2, 
   Sparkles, 
-  QrCode, 
   CheckCircle2, 
   Clock, 
   MapPin, 
-  Truck, 
-  HeartPulse, 
   PhoneCall, 
-  Stethoscope, 
   AlertTriangle, 
   Download, 
   Copy, 
@@ -24,10 +16,10 @@ import {
   Languages,
   Activity,
   UserCheck,
-  Square,
-  Send,
-  Loader2,
-  Radio
+  Building2,
+  Truck,
+  HeartPulse,
+  Stethoscope
 } from 'lucide-react';
 import { WeatherTelemetry, UserHealthProfile, LanguageCode } from '../../types';
 import { CityData } from '../../data/indiaCities';
@@ -67,32 +59,13 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
   const [stage, setStage] = useState<CallStage>('ringing');
   const [currentLang, setCurrentLang] = useState<LanguageCode>(initialLanguage);
   const [callSeconds, setCallSeconds] = useState<number>(0);
-  const [isMuted, setIsMuted] = useState<boolean>(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState<boolean>(true);
-  const [isListening, setIsListening] = useState<boolean>(false);
   const [transcript, setTranscript] = useState<Array<{ sender: 'ai' | 'user'; text: string; time: string }>>([]);
   const [isAiSpeaking, setIsAiSpeaking] = useState<boolean>(false);
   const [activeTicket, setActiveTicket] = useState<AssistanceTicket | null>(null);
   const [hasCopiedToken, setHasCopiedToken] = useState<boolean>(false);
-  const [activeKeypadView, setActiveKeypadView] = useState<boolean>(true);
-  const [isProcessingAi, setIsProcessingAi] = useState<boolean>(false);
-  const [showVoiceConsole, setShowVoiceConsole] = useState<boolean>(false);
-  const [liveSpeechText, setLiveSpeechText] = useState<string>('');
-  const [voiceStatus, setVoiceStatus] = useState<string>('');
-  const [manualVoiceInput, setManualVoiceInput] = useState<string>('');
-  const [audioVolume, setAudioVolume] = useState<number>(0);
-  const [recordingSeconds, setRecordingSeconds] = useState<number>(0);
 
   const transcriptEndRef = useRef<HTMLDivElement>(null);
-  const audioStreamRef = useRef<MediaStream | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const animFrameRef = useRef<number | null>(null);
-  const speechRecognitionRef = useRef<any>(null);
-  const recordingTimerRef = useRef<any>(null);
-  const liveSpeechTextRef = useRef<string>('');
   const isHindi = currentLang === 'hi';
 
   // Handle Opening & Ringtone
@@ -111,7 +84,6 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
     } else {
       stopRingtoneSound();
       stopEmergencyAlertSpeech();
-      cleanupAudioRecording();
       setCallSeconds(0);
       setActiveTicket(null);
     }
@@ -157,8 +129,8 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
 
   const initializeCallDialogue = () => {
     const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const greetingEn = `Hello ${userProfile.name || 'Citizen'}. This is HeatShield Emergency Automated Dispatcher. Extreme heatwave alert is triggered in ${city.name} at ${weather.dryBulbTemp}°C. Do you or your family require immediate emergency help? Please press 1 or speak: Hospital Bed, Cooling Shelter, Water Tanker, or Ambulance.`;
-    const greetingHi = `नमस्ते ${userProfile.name || 'नागरिक'}। यह हीटशील्ड स्वचालित आपातकालीन कॉल सेवा है। ${city.name} में ${weather.dryBulbTemp} डिग्री सेल्सियस पर अत्यधिक लू का अलर्ट जारी है। क्या आपको आपातकालीन सहायता की आवश्यकता है? अस्पताल बेड, शीतलन केंद्र, जल टैंकर या एम्बुलेंस के लिए विकल्प चुनें।`;
+    const greetingEn = `Hello ${userProfile.name || 'Citizen'}. This is HeatShield Emergency Automated Dispatcher. Extreme heatwave alert is triggered in ${city.name} at ${weather.dryBulbTemp}°C. Please press: 1 for Hospital Bed, 2 for Cooling Shelter, 3 for Water Tanker, 4 for 108 Ambulance, 5 for Tele-Doctor, or 9 if you are Safe.`;
+    const greetingHi = `नमस्ते ${userProfile.name || 'नागरिक'}। यह हीटशील्ड स्वचालित आपातकालीन कॉल सेवा है। ${city.name} में ${weather.dryBulbTemp} डिग्री सेल्सियस पर अत्यधिक लू का अलर्ट जारी है। कृपया नंबर दबाएं: अस्पताल बेड के लिए १, शीतलन केंद्र के लिए २, जल टैंकर के लिए ३, एम्बुलेंस के लिए ४, टेली-डॉक्टर के लिए ५, या सुरक्षित होने पर ९ दबाएं।`;
 
     setTranscript([
       {
@@ -188,11 +160,18 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
 
   const handleEndCall = () => {
     stopEmergencyAlertSpeech();
-    cleanupAudioRecording();
     setStage('ended');
     setTimeout(() => {
       onClose();
     }, 1200);
+  };
+
+  // Replay greeting instructions
+  const handleReplayPrompt = () => {
+    stopEmergencyAlertSpeech();
+    const promptEn = `Please select an emergency option: Press 1 for Hospital Bed, 2 for Cooling Shelter, 3 for Water Tanker, 4 for 108 Ambulance, 5 for Tele-Doctor, or 9 for Safe.`;
+    const promptHi = `कृपया विकल्प चुनें: अस्पताल बेड के लिए १, शीतलन केंद्र के लिए २, जल टैंकर के लिए ३, एम्बुलेंस के लिए ४, डॉक्टर के लिए ५, या सुरक्षित हैं तो ९ दबाएं।`;
+    speakResponse(promptHi, promptEn);
   };
 
   // Process IVR Key Option Selection
@@ -270,362 +249,6 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
     ]);
 
     speakResponse(replyHi, replyEn);
-  };
-
-  // Comprehensive Audio Cleanup for Recording & Streams
-  const cleanupAudioRecording = () => {
-    if (recordingTimerRef.current) {
-      clearInterval(recordingTimerRef.current);
-      recordingTimerRef.current = null;
-    }
-    if (animFrameRef.current) {
-      cancelAnimationFrame(animFrameRef.current);
-      animFrameRef.current = null;
-    }
-    if (speechRecognitionRef.current) {
-      try { speechRecognitionRef.current.stop(); } catch (e) {}
-      speechRecognitionRef.current = null;
-    }
-    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-      try { audioContextRef.current.close(); } catch (e) {}
-      audioContextRef.current = null;
-    }
-    if (audioStreamRef.current) {
-      audioStreamRef.current.getTracks().forEach((track) => track.stop());
-      audioStreamRef.current = null;
-    }
-    setAudioVolume(0);
-    setIsListening(false);
-  };
-
-  // Start Real Voice Capture with MediaRecorder + Audio Wave Meter + Web Speech
-  const startVoiceRecording = async () => {
-    // 1. Immediately silence any active AI audio to avoid acoustic feedback and speech conflict
-    stopEmergencyAlertSpeech();
-    setIsAiSpeaking(false);
-    setShowVoiceConsole(true);
-    setLiveSpeechText('');
-    liveSpeechTextRef.current = '';
-    setVoiceStatus(isHindi ? '🎙️ आपकी आवाज़ रिकॉर्ड हो रही है... बोलिए (१० सेकंड)' : '🎙️ Recording voice... Speak clearly now (10s max)');
-
-    try {
-      // 2. Request microphone media stream
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
-      audioStreamRef.current = stream;
-
-      // 3. Setup Web Audio API real-time volume visualizer
-      try {
-        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-        if (AudioCtx) {
-          const audioCtx = new AudioCtx();
-          audioContextRef.current = audioCtx;
-          const source = audioCtx.createMediaStreamSource(stream);
-          const analyser = audioCtx.createAnalyser();
-          analyser.fftSize = 256;
-          source.connect(analyser);
-          analyserRef.current = analyser;
-
-          const dataArray = new Uint8Array(analyser.frequencyBinCount);
-          const updateMeter = () => {
-            if (!analyserRef.current) return;
-            analyserRef.current.getByteFrequencyData(dataArray);
-            let sum = 0;
-            for (let i = 0; i < dataArray.length; i++) {
-              sum += dataArray[i];
-            }
-            const avg = sum / dataArray.length;
-            const level = Math.min(100, Math.round((avg / 128) * 100));
-            setAudioVolume(level);
-            animFrameRef.current = requestAnimationFrame(updateMeter);
-          };
-          updateMeter();
-        }
-      } catch (visErr) {
-        console.warn('AudioContext visualizer notice:', visErr);
-      }
-
-      // 4. Setup MediaRecorder for direct audio capture
-      audioChunksRef.current = [];
-      let mimeType = 'audio/webm';
-      if (typeof MediaRecorder !== 'undefined') {
-        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-          mimeType = 'audio/webm;codecs=opus';
-        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-          mimeType = 'audio/mp4';
-        } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
-          mimeType = 'audio/ogg';
-        }
-      }
-
-      const mediaRecorder = new MediaRecorder(stream, { mimeType });
-      mediaRecorderRef.current = mediaRecorder;
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        if (animFrameRef.current) {
-          cancelAnimationFrame(animFrameRef.current);
-          animFrameRef.current = null;
-        }
-        if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-          try { audioContextRef.current.close(); } catch (e) {}
-          audioContextRef.current = null;
-        }
-        if (audioStreamRef.current) {
-          audioStreamRef.current.getTracks().forEach((track) => track.stop());
-          audioStreamRef.current = null;
-        }
-        setAudioVolume(0);
-        setIsListening(false);
-
-        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-        if (audioBlob.size > 500) {
-          setVoiceStatus(isHindi ? '⚡ एआई आवाज़ का विश्लेषण कर रहा है...' : '⚡ AI analyzing your voice request...');
-          await sendAudioToAiAgent(audioBlob, mimeType);
-        } else if (liveSpeechTextRef.current.trim()) {
-          await processVoiceWithAi(liveSpeechTextRef.current.trim());
-        } else {
-          setVoiceStatus(isHindi ? 'कोई आवाज़ नहीं सुनी गई। नीचे दिए गए विकल्पों में से चुनें।' : 'No voice detected. Please speak again or tap a quick option.');
-        }
-      };
-
-      mediaRecorder.start(250);
-      setIsListening(true);
-      setRecordingSeconds(0);
-
-      // 5. Timer for countdown
-      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
-      recordingTimerRef.current = setInterval(() => {
-        setRecordingSeconds((prev) => {
-          if (prev >= 9) {
-            stopVoiceRecording();
-            return 10;
-          }
-          return prev + 1;
-        });
-      }, 1000);
-
-      // 6. In parallel, run Web Speech API if supported for live text subtitles
-      const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRecognitionClass) {
-        try {
-          const recognition = new SpeechRecognitionClass();
-          speechRecognitionRef.current = recognition;
-          recognition.continuous = true;
-          recognition.interimResults = true;
-          recognition.lang = isHindi ? 'hi-IN' : 'en-IN';
-
-          recognition.onresult = (event: any) => {
-            let fullTranscript = '';
-            for (let i = 0; i < event.results.length; ++i) {
-              fullTranscript += event.results[i][0].transcript + ' ';
-            }
-            const clean = fullTranscript.trim();
-            if (clean) {
-              setLiveSpeechText(clean);
-              liveSpeechTextRef.current = clean;
-            }
-          };
-
-          recognition.onerror = () => {
-            // Silently ignore, MediaRecorder is capturing the raw audio
-          };
-
-          recognition.onend = () => {
-            // MediaRecorder continues
-          };
-
-          recognition.start();
-        } catch (speechErr) {
-          console.debug('Speech recognition non-fatal:', speechErr);
-        }
-      }
-    } catch (err: any) {
-      console.warn('Microphone error:', err);
-      setIsListening(false);
-      setVoiceStatus(
-        isHindi
-          ? 'माइक्रोफ़ोन चालू नहीं हो सका। कृपया नीचे दिए गए त्वरित विकल्पों पर टैप करें।'
-          : 'Microphone could not be accessed. Please tap any quick command below.'
-      );
-    }
-  };
-
-  // Stop Recording & Send Audio to AI
-  const stopVoiceRecording = () => {
-    if (recordingTimerRef.current) {
-      clearInterval(recordingTimerRef.current);
-      recordingTimerRef.current = null;
-    }
-    if (speechRecognitionRef.current) {
-      try { speechRecognitionRef.current.stop(); } catch (e) {}
-      speechRecognitionRef.current = null;
-    }
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      try {
-        mediaRecorderRef.current.stop();
-      } catch (e) {}
-    } else {
-      cleanupAudioRecording();
-    }
-  };
-
-  const toggleVoiceRecording = () => {
-    if (isListening) {
-      stopVoiceRecording();
-    } else {
-      startVoiceRecording();
-    }
-  };
-
-  // Send Recorded Audio to Server AI Agent Dialogue API
-  const sendAudioToAiAgent = async (blob: Blob, mimeType: string) => {
-    setIsProcessingAi(true);
-    try {
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve, reject) => {
-        reader.onloadend = () => {
-          const res = reader.result as string;
-          const base64Data = res.includes(',') ? res.split(',')[1] : res;
-          resolve(base64Data);
-        };
-        reader.onerror = reject;
-      });
-      reader.readAsDataURL(blob);
-      const audioBase64 = await base64Promise;
-
-      const res = await fetch('/api/ai-call-agent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          audioBase64,
-          mimeType,
-          userInput: liveSpeechTextRef.current || undefined,
-          language: currentLang,
-          cityName: city.name,
-          temp: weather.dryBulbTemp,
-        }),
-      });
-
-      const data = await res.json();
-      const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      const spokenDisplay = data.spokenText || liveSpeechTextRef.current || (isHindi ? 'आपातकालीन वॉयस अनुरोध' : 'Emergency Voice Request');
-      setTranscript((prev) => [
-        ...prev,
-        { sender: 'user', text: `🗣️ "${spokenDisplay}"`, time: nowTime },
-      ]);
-
-      if (data.intent === 'RESERVE_HOSPITAL' || data.action === 'BOOK_HOSPITAL') {
-        handleIvrAction('1', 'hospital_bed');
-      } else if (data.intent === 'RESERVE_SHELTER' || data.action === 'BOOK_SHELTER') {
-        handleIvrAction('2', 'cooling_shelter');
-      } else if (data.intent === 'WATER_TANKER' || data.action === 'DISPATCH_TANKER') {
-        handleIvrAction('3', 'water_tanker');
-      } else if (data.intent === 'AMBULANCE_108' || data.action === 'DISPATCH_AMBULANCE') {
-        handleIvrAction('4', 'ambulance_108');
-      } else if (data.intent === 'DOCTOR_CONSULT' || data.action === 'CONNECT_DOCTOR') {
-        handleIvrAction('5', 'doctor_consult');
-      } else if (data.intent === 'MARK_SAFE' || data.action === 'LOG_SAFE') {
-        handleIvrAction('9', 'marked_safe');
-      } else {
-        const replyEn = data.textEn || `HeatShield emergency assistant logged your request in ${city.name}. Press 1 for Hospital Bed, 2 for Cooling Shelter, 3 for Water Tanker, or 4 for 108 Ambulance.`;
-        const replyHi = data.textHi || `${city.name} में आपका अनुरोध दर्ज हुआ। अस्पताल बेड के लिए १, शीतलन केंद्र के लिए २, जल टैंकर के लिए ३ दबाएं।`;
-
-        setTranscript((prev) => [
-          ...prev,
-          { sender: 'ai', text: isHindi ? replyHi : replyEn, time: nowTime },
-        ]);
-        speakResponse(replyHi, replyEn);
-      }
-
-      setVoiceStatus(isHindi ? '✅ वॉयस अनुरोध सफलतापूर्वक दर्ज किया गया' : '✅ Voice request processed successfully');
-      setLiveSpeechText('');
-      liveSpeechTextRef.current = '';
-    } catch (err) {
-      console.warn('AI audio dispatch error:', err);
-      if (liveSpeechTextRef.current.trim()) {
-        await processVoiceWithAi(liveSpeechTextRef.current.trim());
-      } else {
-        handleIvrAction('1', 'hospital_bed');
-      }
-    } finally {
-      setIsProcessingAi(false);
-    }
-  };
-
-  // Send speech or command to Server AI Agent Dialogue API
-  const processVoiceWithAi = async (userInput: string) => {
-    if (!userInput || !userInput.trim()) return;
-    setIsProcessingAi(true);
-    try {
-      const res = await fetch('/api/ai-call-agent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userInput: userInput.trim(),
-          language: currentLang,
-          cityName: city.name,
-          temp: weather.dryBulbTemp,
-        }),
-      });
-
-      const data = await res.json();
-      const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      if (data.intent === 'RESERVE_HOSPITAL' || data.action === 'BOOK_HOSPITAL') {
-        handleIvrAction('1', 'hospital_bed');
-      } else if (data.intent === 'RESERVE_SHELTER' || data.action === 'BOOK_SHELTER') {
-        handleIvrAction('2', 'cooling_shelter');
-      } else if (data.intent === 'WATER_TANKER' || data.action === 'DISPATCH_TANKER') {
-        handleIvrAction('3', 'water_tanker');
-      } else if (data.intent === 'AMBULANCE_108' || data.action === 'DISPATCH_AMBULANCE') {
-        handleIvrAction('4', 'ambulance_108');
-      } else if (data.intent === 'DOCTOR_CONSULT' || data.action === 'CONNECT_DOCTOR') {
-        handleIvrAction('5', 'doctor_consult');
-      } else if (data.intent === 'MARK_SAFE' || data.action === 'LOG_SAFE') {
-        handleIvrAction('9', 'marked_safe');
-      } else {
-        const replyEn = data.textEn || `HeatShield line for ${city.name}. Press 1 for Hospital Bed, 2 for Shelter, 3 for Water Tanker, or 4 for 108 Ambulance.`;
-        const replyHi = data.textHi || `${city.name} के लिए सहायता लाइन। अस्पताल बेड के लिए १, आश्रय केंद्र के लिए २, जल टैंकर के लिए ३ दबाएं।`;
-        
-        setTranscript((prev) => [
-          ...prev,
-          { sender: 'ai', text: isHindi ? replyHi : replyEn, time: nowTime },
-        ]);
-        speakResponse(replyHi, replyEn);
-      }
-      setVoiceStatus('');
-    } catch (err) {
-      console.warn('AI call parsing error:', err);
-      // Fallback
-      handleIvrAction('1', 'hospital_bed');
-    } finally {
-      setIsProcessingAi(false);
-    }
-  };
-
-  const handleSendManualVoiceInput = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!manualVoiceInput.trim()) return;
-    const text = manualVoiceInput.trim();
-    setManualVoiceInput('');
-    const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    setTranscript((prev) => [
-      ...prev,
-      { sender: 'user', text: `🗣️ "${text}"`, time: nowTime },
-    ]);
-    await processVoiceWithAi(text);
   };
 
   const handleCopyToken = () => {
@@ -742,7 +365,7 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
             {/* Top In-Call Header */}
             <div className="p-3.5 bg-[#090D16]/90 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-full bg-[#2563EB] flex items-center justify-center border border-white/20">
+                <div className="w-9 h-9 rounded-full bg-[#2563EB] flex items-center justify-center border border-white/20 shadow-md">
                   <Sparkles className="w-5 h-5 text-[#38BDF8]" />
                 </div>
                 <div>
@@ -777,19 +400,14 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
             <div className="bg-[#0F172A] px-4 py-2 border-b border-white/5 flex items-center justify-between text-[11px] font-mono">
               <div className="flex items-center gap-1.5 text-[#94A3B8]">
                 {isAiSpeaking ? (
-                  <span className="text-[#38BDF8] flex items-center gap-1">
-                    <Volume2 className="w-3.5 h-3.5 animate-pulse" />
-                    <span>AI Assistant Speaking...</span>
-                  </span>
-                ) : isListening ? (
-                  <span className="text-[#EF4444] flex items-center gap-1 font-bold animate-pulse">
-                    <Mic className="w-3.5 h-3.5" />
-                    <span>Listening to you... Speak now</span>
+                  <span className="text-[#38BDF8] flex items-center gap-1.5 font-semibold">
+                    <Volume2 className="w-4 h-4 animate-pulse text-[#38BDF8]" />
+                    <span>{isHindi ? 'एआई सहायक बोल रहा है...' : 'AI Voice Assistant Speaking...'}</span>
                   </span>
                 ) : (
-                  <span className="text-[#94A3B8] flex items-center gap-1">
+                  <span className="text-[#94A3B8] flex items-center gap-1.5">
                     <Activity className="w-3.5 h-3.5 text-[#10B981]" />
-                    <span>Ready • Press key or Tap Mic</span>
+                    <span>{isHindi ? 'तैयार • नीचे दिए गए आईवीआर नंबर दबाएं (1-5, 9)' : 'Ready • Press any IVR Key below (1-5, 9)'}</span>
                   </span>
                 )}
               </div>
@@ -801,8 +419,8 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
                     key={idx}
                     className="w-1 bg-[#38BDF8] rounded-full transition-all duration-150"
                     style={{
-                      height: isAiSpeaking || isListening ? `${(h * (callSeconds % 3 + 1)) / 3}%` : '20%',
-                      opacity: isAiSpeaking || isListening ? 1 : 0.3,
+                      height: isAiSpeaking ? `${(h * (callSeconds % 3 + 1)) / 3}%` : '20%',
+                      opacity: isAiSpeaking ? 1 : 0.3,
                     }}
                   />
                 ))}
@@ -821,24 +439,17 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
                     className={`max-w-[90%] p-2.5 rounded-2xl text-xs leading-relaxed ${
                       msg.sender === 'user'
                         ? 'bg-[#2563EB] text-white rounded-br-xs'
-                        : 'bg-[#1E293B] text-[#F1F5F9] border border-white/10 rounded-bl-xs'
+                        : 'bg-[#1E293B] text-[#F1F5F9] border border-white/10 rounded-bl-xs shadow-md'
                     }`}
                   >
                     <div className="text-[10px] font-mono text-white/60 mb-0.5 flex items-center justify-between gap-3">
-                      <span>{msg.sender === 'user' ? 'Citizen' : 'HeatShield AI Dispatcher'}</span>
+                      <span>{msg.sender === 'user' ? 'Citizen (Keypad Input)' : 'HeatShield AI Dispatcher'}</span>
                       <span>{msg.time}</span>
                     </div>
                     <p>{msg.text}</p>
                   </div>
                 </div>
               ))}
-
-              {isProcessingAi && (
-                <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5 text-[#38BDF8] text-xs font-mono animate-pulse">
-                  <Sparkles className="w-4 h-4 animate-spin" />
-                  <span>Processing emergency action with AI Dispatcher...</span>
-                </div>
-              )}
 
               {/* ------------------------------------------------------------- */}
               {/* LIVE GENERATED EMERGENCY PASS / RESERVATION TICKET */}
@@ -848,17 +459,12 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
                   <div className="flex items-center justify-between border-b border-[#10B981]/40 pb-2">
                     <div className="flex items-center gap-1.5">
                       <CheckCircle2 className="w-5 h-5 text-[#34D399]" />
-                      <div>
-                        <div className="text-[10px] font-mono text-[#A7F3D0] uppercase font-bold tracking-wider">
-                          {activeTicket.details.serviceCode}
-                        </div>
-                        <h4 className="text-xs font-headline font-bold text-white">
-                          {isHindi ? activeTicket.titleHi : activeTicket.titleEn}
-                        </h4>
-                      </div>
+                      <span className="font-bold text-xs text-white">
+                        {isHindi ? 'आपातकालीन पास / टोकन जारी' : 'Emergency Pass / Token Active'}
+                      </span>
                     </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#10B981] text-[#064E3B]">
-                      {activeTicket.status}
+                    <span className="text-[10px] font-mono bg-[#10B981]/30 text-[#A7F3D0] px-2 py-0.5 rounded-md font-bold uppercase">
+                      CONFIRMED
                     </span>
                   </div>
 
@@ -919,16 +525,17 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
                   <span>{isHindi ? 'आईवीआर आपातकालीन सहायता मेन्यू' : 'TOUCH IVR EMERGENCY ASSISTANCE'}</span>
                 </span>
                 <span className="text-[10px] text-[#38BDF8]">
-                  {isHindi ? 'तुरंत आरक्षण हेतु बटन दबाएं' : 'Tap option or speak below'}
+                  {isHindi ? 'नंबर बटन दबाएं' : 'Press key on dialpad'}
                 </span>
               </div>
 
-              {/* Quick 1-Click IVR Emergency Options */}
+              {/* Full 1-Click IVR Emergency Number Options */}
               <div className="grid grid-cols-2 gap-1.5">
+                
                 {/* 1. Hospital Bed */}
                 <button
                   onClick={() => handleIvrAction('1', 'hospital_bed')}
-                  className="p-2 rounded-xl bg-[#C7352B]/20 hover:bg-[#C7352B]/40 border border-[#C7352B]/50 text-left transition-all active:scale-98 cursor-pointer group"
+                  className="p-2 rounded-xl bg-[#C7352B]/20 hover:bg-[#C7352B]/40 border border-[#C7352B]/50 text-left transition-all active:scale-98 cursor-pointer group hover:border-[#EF4444]"
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="w-5 h-5 rounded-md bg-[#C7352B] text-white font-mono font-bold text-xs flex items-center justify-center shadow-xs">
@@ -946,7 +553,7 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
                 {/* 2. Cooling Shelter */}
                 <button
                   onClick={() => handleIvrAction('2', 'cooling_shelter')}
-                  className="p-2 rounded-xl bg-[#0284C7]/20 hover:bg-[#0284C7]/40 border border-[#0284C7]/50 text-left transition-all active:scale-98 cursor-pointer group"
+                  className="p-2 rounded-xl bg-[#0284C7]/20 hover:bg-[#0284C7]/40 border border-[#0284C7]/50 text-left transition-all active:scale-98 cursor-pointer group hover:border-[#38BDF8]"
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="w-5 h-5 rounded-md bg-[#0284C7] text-white font-mono font-bold text-xs flex items-center justify-center shadow-xs">
@@ -964,7 +571,7 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
                 {/* 3. Water Tanker */}
                 <button
                   onClick={() => handleIvrAction('3', 'water_tanker')}
-                  className="p-2 rounded-xl bg-[#0D9488]/20 hover:bg-[#0D9488]/40 border border-[#0D9488]/50 text-left transition-all active:scale-98 cursor-pointer group"
+                  className="p-2 rounded-xl bg-[#0D9488]/20 hover:bg-[#0D9488]/40 border border-[#0D9488]/50 text-left transition-all active:scale-98 cursor-pointer group hover:border-[#2DD4BF]"
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="w-5 h-5 rounded-md bg-[#0D9488] text-white font-mono font-bold text-xs flex items-center justify-center shadow-xs">
@@ -982,7 +589,7 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
                 {/* 4. 108 Ambulance */}
                 <button
                   onClick={() => handleIvrAction('4', 'ambulance_108')}
-                  className="p-2 rounded-xl bg-[#D97706]/20 hover:bg-[#D97706]/40 border border-[#D97706]/50 text-left transition-all active:scale-98 cursor-pointer group"
+                  className="p-2 rounded-xl bg-[#D97706]/20 hover:bg-[#D97706]/40 border border-[#D97706]/50 text-left transition-all active:scale-98 cursor-pointer group hover:border-[#FBBF24]"
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="w-5 h-5 rounded-md bg-[#D97706] text-white font-mono font-bold text-xs flex items-center justify-center shadow-xs">
@@ -1000,7 +607,7 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
                 {/* 5. Doctor Teleconsultation */}
                 <button
                   onClick={() => handleIvrAction('5', 'doctor_consult')}
-                  className="p-2 rounded-xl bg-[#6366F1]/20 hover:bg-[#6366F1]/40 border border-[#6366F1]/50 text-left transition-all active:scale-98 cursor-pointer group"
+                  className="p-2 rounded-xl bg-[#6366F1]/20 hover:bg-[#6366F1]/40 border border-[#6366F1]/50 text-left transition-all active:scale-98 cursor-pointer group hover:border-[#818CF8]"
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="w-5 h-5 rounded-md bg-[#6366F1] text-white font-mono font-bold text-xs flex items-center justify-center shadow-xs">
@@ -1018,7 +625,7 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
                 {/* 9. I Am Safe */}
                 <button
                   onClick={() => handleIvrAction('9', 'marked_safe')}
-                  className="p-2 rounded-xl bg-[#16A34A]/20 hover:bg-[#16A34A]/40 border border-[#16A34A]/50 text-left transition-all active:scale-98 cursor-pointer group"
+                  className="p-2 rounded-xl bg-[#16A34A]/20 hover:bg-[#16A34A]/40 border border-[#16A34A]/50 text-left transition-all active:scale-98 cursor-pointer group hover:border-[#4ADE80]"
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="w-5 h-5 rounded-md bg-[#16A34A] text-white font-mono font-bold text-xs flex items-center justify-center shadow-xs">
@@ -1034,165 +641,17 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
                 </button>
               </div>
 
-              {/* ----------------------------------------------------------------- */}
-              {/* Interactive Voice Dialogue Console when "Speak to AI" is activated */}
-              {/* ----------------------------------------------------------------- */}
-              {showVoiceConsole && (
-                <div className="p-3 rounded-2xl bg-[#091322] border border-[#0284C7]/50 shadow-inner space-y-2.5 animate-in fade-in zoom-in-95 duration-150">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2.5 h-2.5 rounded-full ${isListening ? 'bg-red-500 animate-ping' : 'bg-[#38BDF8]'}`} />
-                      <span className="text-[11px] font-bold text-white font-mono flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-[#38BDF8]" />
-                        <span>{isListening ? (isHindi ? `🔴 आवाज़ रिकॉर्डिंग: 00:0${recordingSeconds} / 00:10` : `🔴 Recording Audio: 00:0${recordingSeconds} / 00:10`) : (isHindi ? 'एआई वॉयस असिस्टेंट' : 'HeatShield AI Voice Assistant')}</span>
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => {
-                        if (isListening) stopVoiceRecording();
-                        setShowVoiceConsole(false);
-                      }}
-                      className="text-[10px] text-[#94A3B8] hover:text-white px-2 py-0.5 rounded bg-white/5 cursor-pointer"
-                    >
-                      {isHindi ? 'छिपाएं' : 'Close'}
-                    </button>
-                  </div>
-
-                  {/* Real-time Dynamic Audio Equalizer Waveform */}
-                  {isListening && (
-                    <div className="bg-black/50 border border-red-500/30 rounded-xl p-2.5 flex flex-col items-center justify-center gap-2 shadow-inner">
-                      <div className="flex items-center justify-center gap-1.5 h-8 w-full px-4">
-                        {[18, 45, 75, 95, 60, 35, 80, 100, 70, 50, 85, 30].map((h, idx) => {
-                          const dynamicHeight = Math.max(15, Math.min(100, Math.round((h * (audioVolume + 25)) / 100)));
-                          return (
-                            <span
-                              key={idx}
-                              style={{ height: `${dynamicHeight}%` }}
-                              className={`w-1.5 rounded-full transition-all duration-75 ${
-                                audioVolume > 20 ? 'bg-gradient-to-t from-[#EF4444] via-[#F59E0B] to-[#10B981]' : 'bg-[#38BDF8]'
-                              }`}
-                            />
-                          );
-                        })}
-                      </div>
-                      <div className="flex items-center justify-between w-full text-[10px] font-mono text-[#FCA5A5] pt-0.5">
-                        <span className="flex items-center gap-1">
-                          <Radio className="w-3 h-3 text-red-400 animate-pulse" />
-                          {isHindi ? 'माइक्रोफ़ोन सक्रिय है...' : 'Microphone Live Audio Capture...'}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={stopVoiceRecording}
-                          className="px-2 py-0.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-bold flex items-center gap-1 cursor-pointer active:scale-95 shadow-xs"
-                        >
-                          <Square className="w-2.5 h-2.5 fill-current" />
-                          <span>{isHindi ? 'पूर्ण (भेजें)' : 'Done (Send)'}</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Status Banner */}
-                  {voiceStatus && (
-                    <div className="text-[11px] text-[#7DD3FC] font-mono bg-[#0369A1]/20 p-2 rounded-lg border border-[#0284C7]/30 flex items-center gap-2">
-                      {isProcessingAi ? (
-                        <Loader2 className="w-3.5 h-3.5 text-[#38BDF8] animate-spin shrink-0" />
-                      ) : isListening ? (
-                        <Mic className="w-3.5 h-3.5 text-red-400 animate-pulse shrink-0" />
-                      ) : (
-                        <Mic className="w-3.5 h-3.5 text-[#38BDF8] shrink-0" />
-                      )}
-                      <span className="leading-tight">{voiceStatus}</span>
-                    </div>
-                  )}
-
-                  {/* Live real-time transcribed words preview */}
-                  {liveSpeechText && (
-                    <div className="text-xs text-white bg-white/10 p-2 rounded-lg font-mono border border-white/20 italic animate-pulse">
-                      "{liveSpeechText}"
-                    </div>
-                  )}
-
-                  {/* Quick Spoken Voice Command Chips */}
-                  <div className="space-y-1">
-                    <span className="text-[10px] text-[#94A3B8] font-mono block">
-                      {isHindi ? 'त्वरित वॉयस निर्देश (बोलें या टैप करें):' : 'Spoken Voice Directives (Speak or Tap):'}
-                    </span>
-                    <div className="flex flex-wrap gap-1">
-                      {[
-                        { en: 'Book ICU hospital bed', hi: 'अस्पताल बेड आरक्षित करें', action: () => handleIvrAction('1', 'hospital_bed') },
-                        { en: 'Cooling shelter pass', hi: 'शीतलन केंद्र डे-पास', action: () => handleIvrAction('2', 'cooling_shelter') },
-                        { en: 'Dispatch water tanker', hi: 'जल टैंकर भेजें', action: () => handleIvrAction('3', 'water_tanker') },
-                        { en: '108 Ambulance Unit', hi: '१०८ एम्बुलेंस प्रेषण', action: () => handleIvrAction('4', 'ambulance_108') },
-                        { en: 'Tele-Doctor Consult', hi: 'डॉक्टर से बात कराएं', action: () => handleIvrAction('5', 'doctor_consult') },
-                        { en: 'I am safe & hydrated', hi: 'मैं सुरक्षित हूँ', action: () => handleIvrAction('9', 'marked_safe') },
-                      ].map((chip, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => {
-                            stopEmergencyAlertSpeech();
-                            if (isListening) stopVoiceRecording();
-                            const chosenText = isHindi ? chip.hi : chip.en;
-                            const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                            setTranscript((prev) => [
-                              ...prev,
-                              { sender: 'user', text: `🗣️ "${chosenText}"`, time: nowTime },
-                            ]);
-                            chip.action();
-                          }}
-                          className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[10px] font-mono border border-white/15 transition-all cursor-pointer hover:border-[#38BDF8] active:scale-95"
-                        >
-                          🗣️ {isHindi ? chip.hi : chip.en}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Direct Voice & Text Input Box */}
-                  <form onSubmit={handleSendManualVoiceInput} className="flex items-center gap-1.5 pt-1">
-                    <input
-                      type="text"
-                      value={manualVoiceInput}
-                      onChange={(e) => setManualVoiceInput(e.target.value)}
-                      placeholder={isHindi ? 'बोलकर बताएं या निर्देश लिखें...' : 'Speak into mic or type instructions...'}
-                      className="flex-1 bg-black/40 border border-white/20 rounded-xl px-2.5 py-1.5 text-xs text-white placeholder:text-[#64748B] focus:outline-none focus:border-[#38BDF8]"
-                    />
-                    <button
-                      type="button"
-                      onClick={toggleVoiceRecording}
-                      className={`p-1.5 rounded-xl border transition-colors cursor-pointer ${
-                        isListening ? 'bg-red-600 text-white border-red-500 animate-pulse' : 'bg-white/10 hover:bg-white/20 text-[#38BDF8] border-white/20'
-                      }`}
-                      title={isListening ? 'Stop Recording & Send' : 'Start Voice Input'}
-                    >
-                      {isListening ? <Square className="w-4 h-4 fill-current" /> : <Mic className="w-4 h-4" />}
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={!manualVoiceInput.trim() || isProcessingAi}
-                      className="px-3 py-1.5 rounded-xl bg-[#0284C7] hover:bg-[#0369A1] disabled:opacity-50 text-white text-xs font-bold font-mono transition-colors cursor-pointer flex items-center gap-1"
-                    >
-                      <Send className="w-3 h-3" />
-                      <span>{isHindi ? 'भेजें' : 'Send'}</span>
-                    </button>
-                  </form>
-                </div>
-              )}
-
-              {/* Bottom In-Call Controls: Mute, Mic Speech, Speaker, End Call */}
+              {/* Bottom In-Call Controls: Replay Prompt, Speaker, End Call */}
               <div className="pt-2 flex items-center justify-between gap-2 border-t border-white/10">
                 
-                {/* Voice Input Mic Toggle */}
+                {/* Replay Prompt Button */}
                 <button
-                  onClick={toggleVoiceRecording}
-                  className={`flex-1 py-2 px-2.5 rounded-xl font-mono text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                    isListening
-                      ? 'bg-[#EF4444] text-white shadow-lg shadow-[#EF4444]/40 animate-pulse'
-                      : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
-                  }`}
+                  onClick={handleReplayPrompt}
+                  className="flex-1 py-2 px-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-mono text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                  title="Replay Voice Instructions"
                 >
-                  {isListening ? <Square className="w-4 h-4 fill-current text-white" /> : <Mic className="w-4 h-4 text-[#38BDF8]" />}
-                  <span>{isListening ? (isHindi ? `रिकॉर्डिंग बंद करें (${10 - recordingSeconds}s)` : `Done (Send ${10 - recordingSeconds}s)`) : (isHindi ? 'बोलकर बताएं' : 'Speak to AI')}</span>
+                  <RotateCcw className="w-3.5 h-3.5 text-[#38BDF8]" />
+                  <span>{isHindi ? 'निर्देश पुनः सुनें' : 'Replay Prompt'}</span>
                 </button>
 
                 {/* Speaker Toggle */}
