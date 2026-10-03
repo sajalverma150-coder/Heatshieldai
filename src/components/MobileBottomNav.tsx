@@ -46,7 +46,6 @@ export interface MobileBottomNavProps {
   isAdminAuthenticated?: boolean;
   onOpenAdminAuthModal?: () => void;
   onLockAdminSession?: () => void;
-  onOpenAiCall?: () => void;
 }
 
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
@@ -70,7 +69,6 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   isAdminAuthenticated = false,
   onOpenAdminAuthModal,
   onLockAdminSession,
-  onOpenAiCall,
 }) => {
   const [internalDrawerOpen, setInternalDrawerOpen] = useState<boolean>(false);
   const isDrawerOpen = isOpen !== undefined ? isOpen : internalDrawerOpen;
@@ -280,29 +278,6 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                 {language === 'hi' ? 'तत्काल आपातकालीन व चिकित्सा सेवाएं' : 'Instant Emergency & Medical Actions'}
               </h4>
               <div className="grid grid-cols-2 gap-2">
-                {/* AI Emergency Voice Call Assistant Button */}
-                {onOpenAiCall && (
-                  <button
-                    id="mobile-drawer-ai-call-btn"
-                    onClick={() => {
-                      setDrawerOpen(false);
-                      onOpenAiCall();
-                    }}
-                    className="p-2.5 rounded-xl bg-gradient-to-br from-[#0c2f54] to-[#081f38] border border-[#38BDF8]/60 hover:border-[#38BDF8] flex items-center gap-2 text-left group cursor-pointer shadow-md col-span-2"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-[#0284C7] flex items-center justify-center text-white shrink-0 animate-pulse">
-                      <PhoneCall className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-xs font-bold text-[#7DD3FC] flex items-center justify-between">
-                        <span>{language === 'hi' ? 'एआई आपातकालीन कॉल सहायक' : 'AI Heat Emergency Call Assistant'}</span>
-                        <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-green-500/20 text-green-300 font-bold">AUTO</span>
-                      </div>
-                      <div className="text-[10px] text-slate-300">{language === 'hi' ? 'अस्पताल बेड, शीतलन केंद्र व जल टैंकर बुकिंग' : 'Hospital beds, cooling shelters & tanker IVR'}</div>
-                    </div>
-                  </button>
-                )}
-
                 {/* AI Triage Button */}
                 {onOpenTriage && (
                   <button

@@ -88,15 +88,6 @@ export const ActiveAssistanceTicketsBanner: React.FC<ActiveAssistanceTicketsBann
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end pt-1 sm:pt-0">
-            {onOpenCallModal && (
-              <button
-                onClick={onOpenCallModal}
-                className="py-1.5 px-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-mono text-white flex items-center gap-1 transition-colors cursor-pointer"
-              >
-                <PhoneCall className="w-3.5 h-3.5 text-[#38BDF8]" />
-                <span>{isHindi ? 'एआई कॉल खोलें' : 'Open AI Call'}</span>
-              </button>
-            )}
             <button
               onClick={() => deleteAssistanceTicket(ticket.id)}
               className="p-1.5 text-white/60 hover:text-white rounded-lg hover:bg-white/10 transition-colors cursor-pointer"

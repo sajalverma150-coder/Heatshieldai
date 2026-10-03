@@ -12,9 +12,9 @@ interface EmergencyAlertBannerProps {
   endDate?: string;
   onViewSafetyGuidance: () => void;
   onAnnounceAlert?: () => void;
-  onTriggerAiCall?: () => void;
   dryBulbTemp?: number;
   wbgt?: number;
+  humidity?: number;
 }
 
 export const EmergencyAlertBanner: React.FC<EmergencyAlertBannerProps> = ({
@@ -25,9 +25,9 @@ export const EmergencyAlertBanner: React.FC<EmergencyAlertBannerProps> = ({
   endDate,
   onViewSafetyGuidance,
   onAnnounceAlert,
-  onTriggerAiCall,
   dryBulbTemp,
   wbgt,
+  humidity,
 }) => {
   const [isDismissed, setIsDismissed] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -148,7 +148,7 @@ export const EmergencyAlertBanner: React.FC<EmergencyAlertBannerProps> = ({
                 {isHindi ? 'सक्रिय ताप चेतावनी पूर्वानुमान' : 'ACTIVE HEAT FORECAST ADVISORY'}
               </span>
               <span className="text-[11px] font-mono font-semibold" style={{ color: risk.textColor }}>
-                [{risk.shapeLabel} • Score: {risk.numericScore}/10 • Next 72h Window]
+                [{risk.shapeLabel} • Score: {risk.numericScore}/10{humidity !== undefined ? ` • RH: ${Math.round(humidity)}%` : ''} • Next 72h Window]
               </span>
             </div>
 
@@ -161,20 +161,8 @@ export const EmergencyAlertBanner: React.FC<EmergencyAlertBannerProps> = ({
           </div>
         </div>
 
-        {/* Right Actions: AI Call Trigger + Voice Announcement + View Guidance + Dismiss */}
+        {/* Right Actions: Voice Announcement + View Guidance + Dismiss */}
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          {/* AI Emergency Voice Call Assistant Button */}
-          {onTriggerAiCall && (
-            <button
-              onClick={onTriggerAiCall}
-              className="flex items-center gap-1.5 px-2.5 py-1 sm:py-1.5 rounded text-xs font-bold cursor-pointer transition-all bg-gradient-to-r from-[#135A9C] to-[#0284C7] hover:from-[#0E4375] hover:to-[#0369A1] text-white shadow-xs animate-pulse"
-              title={isHindi ? 'एआई आपातकालीन कॉल एवं बेड आरक्षण' : 'AI Safety Call & Hospital Bed / Shelter Reservation'}
-            >
-              <span className="w-2 h-2 rounded-full bg-green-400" />
-              <span>{isHindi ? 'एआई आपातकालीन कॉल' : 'AI Safety Call'}</span>
-            </button>
-          )}
-
           {/* Audio Voice Announcement Button */}
           <button
             onClick={handleSpeak}

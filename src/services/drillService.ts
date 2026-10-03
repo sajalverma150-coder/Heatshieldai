@@ -170,6 +170,7 @@ export function dispatchHeatwaveEmergencyPushNotification({
   city,
   dryBulbTemp,
   wbgt,
+  humidity = 65,
   heatIndex,
   isDrill = false,
   scenario,
@@ -178,6 +179,7 @@ export function dispatchHeatwaveEmergencyPushNotification({
   city: CityData;
   dryBulbTemp: number;
   wbgt: number;
+  humidity?: number;
   heatIndex: number;
   isDrill?: boolean;
   scenario?: DrillScenario;
@@ -187,13 +189,14 @@ export function dispatchHeatwaveEmergencyPushNotification({
   playNotificationChime();
   triggerHapticVibrate([150, 80, 200, 100, 250]);
 
+  const roundedHumidity = Math.round(humidity);
   const activeScenario = scenario || DRILL_SCENARIOS[0];
   const prefix = isDrill ? '🚨 [HEATWAVE DRILL]' : '🚨 [IMD/NDMA RED ALERT]';
-  const title = `${prefix} Extreme Heat Danger in ${city.name} (${dryBulbTemp}°C | WBGT ${wbgt}°C)`;
+  const title = `${prefix} Extreme Heat Danger in ${city.name} (${dryBulbTemp}°C | Humidity ${roundedHumidity}% | WBGT ${wbgt}°C)`;
   
   const bodyText = isDrill
-    ? `ISSUE: ${activeScenario.issueText}\n\nACTION REQUIRED: ${activeScenario.actionText}`
-    : `ISSUE: Extreme heatwave conditions detected with ambient temperature ${dryBulbTemp}°C and Wet Bulb Globe Temp ${wbgt}°C. High risk of heat stroke & hyperthermia.\n\nACTION REQUIRED: Move to air-cooled facility immediately, hydrate with ORS/water, cease outdoor physical labor.`;
+    ? `ISSUE: ${activeScenario.issueText} (Ambient: ${dryBulbTemp}°C, Humidity: ${roundedHumidity}%, WBGT: ${wbgt}°C)\n\nACTION REQUIRED: ${activeScenario.actionText}`
+    : `ISSUE: Extreme heatwave conditions detected with ambient temperature ${dryBulbTemp}°C, relative humidity ${roundedHumidity}%, and Wet Bulb Globe Temp ${wbgt}°C. High risk of heat stroke & hyperthermia.\n\nACTION REQUIRED: Move to air-cooled facility immediately, hydrate with ORS/water, cease outdoor physical labor.`;
 
   // 1. Broadcast to In-App Push Notification Banner
   broadcastPushNotification({

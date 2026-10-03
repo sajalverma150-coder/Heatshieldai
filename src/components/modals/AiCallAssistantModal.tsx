@@ -72,6 +72,10 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
   const [hasCopiedToken, setHasCopiedToken] = useState<boolean>(false);
   const [activeKeypadView, setActiveKeypadView] = useState<boolean>(true);
   const [isProcessingAi, setIsProcessingAi] = useState<boolean>(false);
+  const [showVoiceConsole, setShowVoiceConsole] = useState<boolean>(false);
+  const [liveSpeechText, setLiveSpeechText] = useState<string>('');
+  const [voiceStatus, setVoiceStatus] = useState<string>('');
+  const [manualVoiceInput, setManualVoiceInput] = useState<string>('');
 
   const recognitionRef = useRef<any>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
@@ -262,8 +266,13 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
     speakResponse(replyHi, replyEn);
   };
 
-  // Handle Voice Input via Web Speech Recognition
-  const toggleSpeechRecognition = () => {
+  // Handle Voice Input via Web Speech Recognition & Interactive Voice Assistant
+  const toggleSpeechRecognition = async () => {
+    // 1. Immediately silence any active AI audio to avoid acoustic feedback and speech conflict
+    stopEmergencyAlertSpeech();
+    setIsAiSpeaking(false);
+    setShowVoiceConsole(true);
+
     if (isListening) {
       if (recognitionRef.current) {
         try {
@@ -271,43 +280,86 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
         } catch (e) {}
       }
       setIsListening(false);
+      setVoiceStatus(isHindi ? 'माइक बंद किया गया। नीचे विकल्प चुनें या बोलकर बताएं।' : 'Microphone stopped. Tap a quick command or speak.');
       return;
+    }
+
+    setVoiceStatus(isHindi ? '🎙️ आपकी आवाज़ सुन रहा हूँ... बोलिए (जैसे: "अस्पताल बेड चाहिए")' : '🎙️ Listening for your voice... Speak now (e.g. "Reserve hospital bed")');
+    setLiveSpeechText('');
+
+    // 2. Request browser microphone media stream permission
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+    } catch (permErr) {
+      console.warn('Microphone permission warning:', permErr);
     }
 
     const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognitionClass) {
-      alert(isHindi ? 'आपके ब्राउज़र में वॉयस रिकॉग्निशन उपलब्ध नहीं है। कृपया कीपैड का उपयोग करें।' : 'Voice recognition is not supported in this browser. Please use the IVR keypad buttons.');
+      setVoiceStatus(
+        isHindi 
+          ? 'इस ब्राउज़र में लाइव वॉयस रिकॉग्निशन समर्थित नहीं है। नीचे दिया गया त्वरित विकल्प चुनें या टाइप करें।' 
+          : 'Live speech recognition is not supported in this browser. Please use the quick voice commands or text box below.'
+      );
       return;
     }
 
     try {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort(); } catch (e) {}
+      }
+
       const recognition = new SpeechRecognitionClass();
       recognitionRef.current = recognition;
       recognition.continuous = false;
-      recognition.interimResults = false;
+      recognition.interimResults = true;
       recognition.lang = isHindi ? 'hi-IN' : 'en-IN';
 
       recognition.onstart = () => {
         setIsListening(true);
+        setVoiceStatus(isHindi ? '🔴 लाइव सुन रहा हूँ... स्पष्ट बोलिए' : '🔴 Listening live... Speak clearly now');
       };
 
       recognition.onresult = async (event: any) => {
-        const spokenText = event.results[0][0].transcript;
-        setIsListening(false);
-        if (!spokenText) return;
+        let interimText = '';
+        let finalText = '';
 
-        const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        setTranscript((prev) => [
-          ...prev,
-          { sender: 'user', text: `🗣️ "${spokenText}"`, time: nowTime },
-        ]);
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalText += event.results[i][0].transcript;
+          } else {
+            interimText += event.results[i][0].transcript;
+          }
+        }
 
-        await processVoiceWithAi(spokenText);
+        const currentSpoken = (finalText || interimText).trim();
+        setLiveSpeechText(currentSpoken);
+
+        if (finalText.trim()) {
+          setIsListening(false);
+          const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          setTranscript((prev) => [
+            ...prev,
+            { sender: 'user', text: `🗣️ "${finalText.trim()}"`, time: nowTime },
+          ]);
+          setVoiceStatus(isHindi ? '⚡ एआई आपकी मांग का विश्लेषण कर रहा है...' : '⚡ AI analyzing your emergency request...');
+          await processVoiceWithAi(finalText.trim());
+          setLiveSpeechText('');
+        }
       };
 
       recognition.onerror = (err: any) => {
-        console.warn('Speech recognition error:', err);
+        console.warn('Speech recognition warning:', err);
         setIsListening(false);
+        if (err.error === 'not-allowed') {
+          setVoiceStatus(isHindi ? 'माइक्रोफ़ोन अनुमति अवरुद्ध है। कृपया नीचे दिए गए त्वरित विकल्पों पर टैप करें।' : 'Microphone permission blocked. Please tap any quick command below.');
+        } else if (err.error === 'no-speech') {
+          setVoiceStatus(isHindi ? 'कोई आवाज़ नहीं सुनी गई। पुनः प्रयास करें या विकल्प चुनें।' : 'No speech detected. Please speak again or tap a quick command below.');
+        } else {
+          setVoiceStatus(isHindi ? 'वॉयस इनपुट तैयार है। नीचे त्वरित विकल्प चुनें या बोलें।' : 'Voice input ready. Tap any quick verbal command below.');
+        }
       };
 
       recognition.onend = () => {
@@ -318,18 +370,20 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
     } catch (err) {
       console.warn('Failed to start speech recognition:', err);
       setIsListening(false);
+      setVoiceStatus(isHindi ? 'वॉयस इनपुट में समस्या आई। नीचे त्वरित विकल्प चुनें।' : 'Voice recognition ready. Tap any command below.');
     }
   };
 
-  // Send speech to Server AI Agent Dialogue API
+  // Send speech or command to Server AI Agent Dialogue API
   const processVoiceWithAi = async (userInput: string) => {
+    if (!userInput || !userInput.trim()) return;
     setIsProcessingAi(true);
     try {
       const res = await fetch('/api/ai-call-agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userInput,
+          userInput: userInput.trim(),
           language: currentLang,
           cityName: city.name,
           temp: weather.dryBulbTemp,
@@ -361,6 +415,7 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
         ]);
         speakResponse(replyHi, replyEn);
       }
+      setVoiceStatus('');
     } catch (err) {
       console.warn('AI call parsing error:', err);
       // Fallback
@@ -368,6 +423,19 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
     } finally {
       setIsProcessingAi(false);
     }
+  };
+
+  const handleSendManualVoiceInput = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!manualVoiceInput.trim()) return;
+    const text = manualVoiceInput.trim();
+    setManualVoiceInput('');
+    const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    setTranscript((prev) => [
+      ...prev,
+      { sender: 'user', text: `🗣️ "${text}"`, time: nowTime },
+    ]);
+    await processVoiceWithAi(text);
   };
 
   const handleCopyToken = () => {
@@ -775,6 +843,114 @@ export const AiCallAssistantModal: React.FC<AiCallAssistantModalProps> = ({
                   </p>
                 </button>
               </div>
+
+              {/* ----------------------------------------------------------------- */}
+              {/* Interactive Voice Dialogue Console when "Speak to AI" is activated */}
+              {/* ----------------------------------------------------------------- */}
+              {showVoiceConsole && (
+                <div className="p-3 rounded-2xl bg-[#091322] border border-[#0284C7]/50 shadow-inner space-y-2 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`w-2.5 h-2.5 rounded-full ${isListening ? 'bg-red-500 animate-ping' : 'bg-[#38BDF8]'}`} />
+                      <span className="text-[11px] font-bold text-white font-mono flex items-center gap-1">
+                        <Sparkles className="w-3.5 h-3.5 text-[#38BDF8]" />
+                        {isHindi ? 'एआई वॉयस असिस्टेंट' : 'HeatShield AI Voice Assistant'}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => setShowVoiceConsole(false)}
+                      className="text-[10px] text-[#94A3B8] hover:text-white px-1.5 py-0.5 rounded bg-white/5 cursor-pointer"
+                    >
+                      {isHindi ? 'छिपाएं' : 'Close'}
+                    </button>
+                  </div>
+
+                  {/* Status Banner / Sound wave animation */}
+                  {voiceStatus && (
+                    <div className="text-[11px] text-[#7DD3FC] font-mono bg-[#0369A1]/20 p-2 rounded-lg border border-[#0284C7]/30 flex items-center gap-2">
+                      {isListening ? (
+                        <div className="flex items-center gap-1 shrink-0">
+                          <span className="w-1 h-3 bg-red-400 rounded-full animate-bounce" />
+                          <span className="w-1 h-4 bg-red-400 rounded-full animate-bounce [animation-delay:0.1s]" />
+                          <span className="w-1 h-2 bg-red-400 rounded-full animate-bounce [animation-delay:0.2s]" />
+                        </div>
+                      ) : (
+                        <Mic className="w-3.5 h-3.5 text-[#38BDF8] shrink-0" />
+                      )}
+                      <span className="leading-tight">{voiceStatus}</span>
+                    </div>
+                  )}
+
+                  {/* Live real-time transcribed words preview */}
+                  {liveSpeechText && (
+                    <div className="text-xs text-white bg-white/10 p-2 rounded-lg font-mono border border-white/20 italic animate-pulse">
+                      "{liveSpeechText}"
+                    </div>
+                  )}
+
+                  {/* Quick Spoken Voice Command Chips */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] text-[#94A3B8] font-mono block">
+                      {isHindi ? 'त्वरित वॉयस निर्देश (बोलें या टैप करें):' : 'Spoken Voice Directives (Speak or Tap):'}
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {[
+                        { en: 'Book ICU hospital bed', hi: 'अस्पताल बेड आरक्षित करें', action: () => handleIvrAction('1', 'hospital_bed') },
+                        { en: 'Cooling shelter pass', hi: 'शीतलन केंद्र डे-पास', action: () => handleIvrAction('2', 'cooling_shelter') },
+                        { en: 'Dispatch water tanker', hi: 'जल टैंकर भेजें', action: () => handleIvrAction('3', 'water_tanker') },
+                        { en: '108 Ambulance Unit', hi: '१०८ एम्बुलेंस प्रेषण', action: () => handleIvrAction('4', 'ambulance_108') },
+                        { en: 'Tele-Doctor Consult', hi: 'डॉक्टर से बात कराएं', action: () => handleIvrAction('5', 'doctor_consult') },
+                        { en: 'I am safe & hydrated', hi: 'मैं सुरक्षित हूँ', action: () => handleIvrAction('9', 'marked_safe') },
+                      ].map((chip, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => {
+                            stopEmergencyAlertSpeech();
+                            const chosenText = isHindi ? chip.hi : chip.en;
+                            const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                            setTranscript((prev) => [
+                              ...prev,
+                              { sender: 'user', text: `🗣️ "${chosenText}"`, time: nowTime },
+                            ]);
+                            chip.action();
+                          }}
+                          className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[10px] font-mono border border-white/15 transition-all cursor-pointer hover:border-[#38BDF8] active:scale-95"
+                        >
+                          🗣️ {isHindi ? chip.hi : chip.en}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Direct Voice & Text Input Box */}
+                  <form onSubmit={handleSendManualVoiceInput} className="flex items-center gap-1.5 pt-1">
+                    <input
+                      type="text"
+                      value={manualVoiceInput}
+                      onChange={(e) => setManualVoiceInput(e.target.value)}
+                      placeholder={isHindi ? 'बोलकर बताएं या निर्देश लिखें...' : 'Speak into mic or type instructions...'}
+                      className="flex-1 bg-black/40 border border-white/20 rounded-xl px-2.5 py-1.5 text-xs text-white placeholder:text-[#64748B] focus:outline-none focus:border-[#38BDF8]"
+                    />
+                    <button
+                      type="button"
+                      onClick={toggleSpeechRecognition}
+                      className={`p-1.5 rounded-xl border transition-colors cursor-pointer ${
+                        isListening ? 'bg-red-600 text-white border-red-500 animate-pulse' : 'bg-white/10 hover:bg-white/20 text-[#38BDF8] border-white/20'
+                      }`}
+                      title="Microphone Speak"
+                    >
+                      <Mic className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!manualVoiceInput.trim() || isProcessingAi}
+                      className="px-3 py-1.5 rounded-xl bg-[#0284C7] hover:bg-[#0369A1] disabled:opacity-50 text-white text-xs font-bold font-mono transition-colors cursor-pointer"
+                    >
+                      {isHindi ? 'भेजें' : 'Send'}
+                    </button>
+                  </form>
+                </div>
+              )}
 
               {/* Bottom In-Call Controls: Mute, Mic Speech, Speaker, End Call */}
               <div className="pt-2 flex items-center justify-between gap-2 border-t border-white/10">

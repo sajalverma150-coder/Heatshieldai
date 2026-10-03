@@ -53,6 +53,7 @@ export const HeatwaveDrillBanner: React.FC<HeatwaveDrillBannerProps> = ({
       city: selectedCity,
       dryBulbTemp: weather.dryBulbTemp,
       wbgt: weather.wbgt,
+      humidity: weather.humidity,
       heatIndex: weather.heatIndex,
       isDrill: true,
       scenario: activeScenario,
@@ -92,7 +93,7 @@ export const HeatwaveDrillBanner: React.FC<HeatwaveDrillBannerProps> = ({
               <div className="text-xs sm:text-sm font-semibold text-white mt-0.5 flex flex-wrap items-center gap-2">
                 <span>{isHindi ? activeScenario.nameHi : activeScenario.name}</span>
                 <span className="font-mono text-yellow-300 text-xs bg-black/30 px-1.5 py-0.2 rounded border border-white/20">
-                  {weather.dryBulbTemp}°C • WBGT {weather.wbgt}°C • HI {weather.heatIndex}°C
+                  {weather.dryBulbTemp}°C • 💧 {Math.round(weather.humidity)}% RH • WBGT {weather.wbgt}°C • HI {weather.heatIndex}°C
                 </span>
               </div>
             </div>

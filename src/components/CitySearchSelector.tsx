@@ -73,6 +73,7 @@ export const CitySearchSelector: React.FC<CitySearchSelectorProps> = ({
       return {
         temp: activeWeather.dryBulbTemp,
         wbgt: activeWeather.wbgt,
+        humidity: activeWeather.humidity ?? 65,
         risk: activeWeather.riskLevel,
       };
     }
@@ -81,12 +82,14 @@ export const CitySearchSelector: React.FC<CitySearchSelectorProps> = ({
       return {
         temp: live.dryBulbTemp,
         wbgt: live.wbgt,
+        humidity: live.humidity ?? 65,
         risk: live.riskLevel,
       };
     }
     return {
       temp: cityItem.weather.dryBulbTemp,
       wbgt: cityItem.weather.wbgt,
+      humidity: cityItem.weather.humidity ?? 65,
       risk: cityItem.weather.riskLevel,
     };
   };
@@ -568,7 +571,7 @@ export const CitySearchSelector: React.FC<CitySearchSelectorProps> = ({
                                 ? 'bg-[#FDF0E9] text-[#C65D27]' 
                                 : 'bg-[#E8F1F5] text-[#2F7F82]'
                         }`}>
-                          {telemetry.temp}°C
+                          {telemetry.temp}°C · 💧{Math.round(telemetry.humidity)}%
                         </span>
                       </button>
                     );
@@ -624,6 +627,9 @@ export const CitySearchSelector: React.FC<CitySearchSelectorProps> = ({
                                 : 'text-[#317A5A]'
                           }`}>
                             {telemetry.temp}°C
+                          </span>
+                          <span className="text-xs font-mono text-[#0284C7] font-semibold">
+                            💧{Math.round(telemetry.humidity)}%
                           </span>
                           <span className="text-xs font-mono text-[#657783]">
                             (WBGT {telemetry.wbgt}°)

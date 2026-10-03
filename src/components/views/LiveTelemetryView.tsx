@@ -434,12 +434,12 @@ export const LiveTelemetryView: React.FC<LiveTelemetryViewProps> = ({
                 </div>
               </div>
 
-              <div className="border-l border-[#D6E0E5] pl-6 hidden sm:block">
+              <div className="border-l border-[#D6E0E5] pl-4 sm:pl-6">
                 <span className="block text-xs uppercase font-mono font-semibold text-[#657783] mb-1">
                   Relative Humidity
                 </span>
-                <div className="text-3xl sm:text-4xl font-mono font-bold text-[#2F7F82]">
-                  {weather.humidity}<span className="text-xl font-sans font-normal text-[#657783]">%</span>
+                <div className="text-2xl sm:text-4xl font-mono font-bold text-[#2F7F82]">
+                  {Math.round(weather.humidity)}<span className="text-xl font-sans font-normal text-[#657783]">%</span>
                 </div>
               </div>
 

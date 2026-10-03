@@ -25,25 +25,50 @@ export function calculateWetBulbTemp(T: number, RH: number): number {
 }
 
 /**
- * Estimate Outdoor Wet Bulb Globe Temperature (WBGT)
- * Uses standard ISO 7243 / Australian BOM approximation:
- * In shade or night (solarRad <= 20 W/m²): WBGT = 0.7 * Tw + 0.3 * T
- * In outdoor sun: WBGT = 0.7 * Tw + 0.2 * Tg + 0.1 * T, where Tg models physical solar elevation
+ * Estimate Wet Bulb Globe Temperature (WBGT)
+ * Conforms to the standard meteorological formula used by the India Meteorological Department (IMD),
+ * National Disaster Management Authority (NDMA), and ISO 7243:
+ * 
+ * 1. Shaded / Indoor Environment (no direct solar radiation, or solarRad <= 20 W/m²):
+ *    WBGT = 0.7 * Tw + 0.3 * Td
+ * 
+ * 2. Outdoor Direct Sunlight Environment:
+ *    WBGT = 0.7 * Tw + 0.2 * Tg + 0.1 * Td
+ * 
+ * where:
+ *   - Tw = Natural Wet Bulb Temperature (°C)
+ *   - Td = Dry Bulb Air Temperature (°C)
+ *   - Tg = Black Globe Temperature (°C), derived from thermodynamic energy balance:
+ *          deltaTg = S / (80 + 35 * sqrt(v))
+ *          Tg = Td + min(14, max(0, deltaTg))
+ *          where S is incident solar irradiance in W/m² and v is wind speed in m/s.
+ * 
+ * @param T Ambient dry bulb temperature in °C
+ * @param RH Relative humidity percentage (0-100)
+ * @param windSpeedKmH Wind speed in km/h
+ * @param solarRad Incident solar irradiance in W/m² (default 0)
+ * @param knownTw Optional known thermodynamic wet bulb temperature from API
  */
-export function calculateWBGT(T: number, RH: number, windSpeedKmH: number, solarRad?: number): number {
-  const Tw = calculateWetBulbTemp(T, RH);
+export function calculateWBGT(
+  T: number,
+  RH: number,
+  windSpeedKmH: number = 5,
+  solarRad: number = 0,
+  knownTw?: number
+): number {
+  const Tw = typeof knownTw === 'number' && !isNaN(knownTw) ? knownTw : calculateWetBulbTemp(T, RH);
   const windM_S = Math.max(0.3, (windSpeedKmH || 5) / 3.6);
   const rad = typeof solarRad === 'number' ? Math.max(0, solarRad) : 0;
 
   if (rad <= 20) {
-    // Night-time or shaded WBGT (ISO 7243 indoor/shaded standard)
+    // Night-time or shaded WBGT (ISO 7243 / IMD indoor standard)
     const wbgt = 0.7 * Tw + 0.3 * T;
     return Number(wbgt.toFixed(1));
   }
 
-  // Outdoor solar WBGT: Globe temperature elevation from solar insolation
-  const solarElevation = (rad / 1000) * (9.5 / Math.sqrt(windM_S));
-  const Tg = T + Math.min(10, Math.max(0, solarElevation));
+  // Outdoor solar WBGT: Globe temperature elevation from incident solar insolation
+  const deltaTg = rad / (80 + 35 * Math.sqrt(windM_S));
+  const Tg = T + Math.min(14, Math.max(0, deltaTg));
   const wbgt = 0.7 * Tw + 0.2 * Tg + 0.1 * T;
   return Number(wbgt.toFixed(1));
 }
@@ -103,7 +128,7 @@ export async function fetchLiveWeatherFromApi(
   lng: number,
   fallbackWeather: WeatherTelemetry
 ): Promise<WeatherTelemetry> {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,direct_normal_irradiance,uv_index&timezone=auto`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,apparent_temperature,wet_bulb_temperature_2m,precipitation,weather_code,wind_speed_10m,direct_normal_irradiance,uv_index&timezone=auto`;
 
   const data = await safeFetchOpenMeteoJson(url);
   if (!data || !data.current) {
@@ -129,8 +154,13 @@ export async function fetchLiveWeatherFromApi(
     ? Math.max(0, Math.round(current.direct_normal_irradiance))
     : (fallbackWeather.solarRadiation ?? 0);
 
-  const wetBulbTemp = calculateWetBulbTemp(dryBulbTemp, humidity);
-  const wbgt = calculateWBGT(dryBulbTemp, humidity, windSpeed, solarRadiation);
+  // Synchronized wet bulb temperature (from thermodynamic satellite API, with Stull fallback)
+  const wetBulbTemp = typeof current.wet_bulb_temperature_2m === 'number'
+    ? Number(current.wet_bulb_temperature_2m.toFixed(1))
+    : calculateWetBulbTemp(dryBulbTemp, humidity);
+
+  // Meteorological WBGT calculation using synchronized wet bulb and energy balance globe model
+  const wbgt = calculateWBGT(dryBulbTemp, humidity, windSpeed, solarRadiation, wetBulbTemp);
   const utci = calculateUTCI(dryBulbTemp, humidity, windSpeed);
   const sweatLossRate = calculateSweatLossRate(apparentTemp, wbgt);
 
@@ -182,7 +212,7 @@ export async function fetchLiveForecastFromApi(
   cityName: string,
   climateZone?: string
 ): Promise<ForecastDay[]> {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_sum,wind_speed_10m_max,weather_code&hourly=temperature_2m,relative_humidity_2m,apparent_temperature&forecast_days=7&timezone=auto`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_sum,wind_speed_10m_max,weather_code&hourly=temperature_2m,relative_humidity_2m,apparent_temperature,wet_bulb_temperature_2m,direct_normal_irradiance,wind_speed_10m&forecast_days=7&timezone=auto`;
 
   const data = await safeFetchOpenMeteoJson(url);
   if (!data || !data.daily || !data.daily.time || data.daily.time.length === 0) {
@@ -195,6 +225,17 @@ export async function fetchLiveForecastFromApi(
 
   const daysCount = Math.min(7, daily.time.length);
   const forecastList: ForecastDay[] = [];
+
+  // Typical diurnal solar irradiance curve (W/m²) across Indian daylight hours for fallback
+  const diurnalSolarFallback: Record<string, number> = {
+    '08:00': 180,
+    '10:00': 550,
+    '12:00': 850,
+    '14:00': 820,
+    '16:00': 480,
+    '18:00': 60,
+    '20:00': 0,
+  };
 
   for (let i = 0; i < daysCount; i++) {
     const rawDate = daily.time[i]; // e.g. "2026-09-05"
@@ -213,22 +254,35 @@ export async function fetchLiveForecastFromApi(
     // Extract daytime hourly slices (08:00, 10:00, 12:00, 14:00, 16:00, 18:00, 20:00)
     const targetHours = ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00'];
     const hourlyStress: Array<{ hour: string; temp: number; wbgt: number; stressLevel: number }> = [];
-    let computedMaxWBGT = 26.0;
+    let computedMaxWBGT = 24.0;
 
     targetHours.forEach((hourStr) => {
       const isoPrefix = `${rawDate}T${hourStr}`;
       let hTemp = maxTemp - 3;
       let hHumidity = 65;
+      let hWetBulb: number | undefined = undefined;
+      let hSolar = diurnalSolarFallback[hourStr] ?? 0;
+      let hWind = 10;
 
       if (hourly && hourly.time) {
         const idx = hourly.time.findIndex((t: string) => t.startsWith(isoPrefix));
         if (idx !== -1) {
           hTemp = hourly.temperature_2m[idx] ?? hTemp;
           hHumidity = hourly.relative_humidity_2m[idx] ?? hHumidity;
+          if (typeof hourly.wet_bulb_temperature_2m?.[idx] === 'number') {
+            hWetBulb = hourly.wet_bulb_temperature_2m[idx];
+          }
+          if (typeof hourly.direct_normal_irradiance?.[idx] === 'number') {
+            hSolar = Math.max(0, Math.round(hourly.direct_normal_irradiance[idx]));
+          }
+          if (typeof hourly.wind_speed_10m?.[idx] === 'number') {
+            hWind = hourly.wind_speed_10m[idx];
+          }
         }
       }
 
-      const hWbgt = calculateWBGT(hTemp, hHumidity, 12, 800);
+      // Standard IMD WBGT calculated with true diurnal solar irradiance and thermodynamic wet bulb
+      const hWbgt = calculateWBGT(hTemp, hHumidity, hWind, hSolar, hWetBulb);
       if (hWbgt > computedMaxWBGT) {
         computedMaxWBGT = hWbgt;
       }
@@ -428,7 +482,7 @@ export async function fetchLiveBatchCitiesWeather(
   try {
     const lats = cities.map((c) => c.lat.toFixed(4)).join(',');
     const lngs = cities.map((c) => c.lng.toFixed(4)).join(',');
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,direct_normal_irradiance&timezone=auto`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}&current=temperature_2m,relative_humidity_2m,apparent_temperature,wet_bulb_temperature_2m,wind_speed_10m,direct_normal_irradiance&timezone=auto`;
 
     const data = await safeFetchOpenMeteoJson(url);
     if (!data) return {};
@@ -446,7 +500,10 @@ export async function fetchLiveBatchCitiesWeather(
         const solarRad = typeof item.direct_normal_irradiance === 'number'
           ? Math.max(0, Math.round(item.direct_normal_irradiance))
           : 0;
-        const wbgt = calculateWBGT(dryBulbTemp, humidity, windSpeed, solarRad);
+        const wetBulb = typeof item.wet_bulb_temperature_2m === 'number'
+          ? item.wet_bulb_temperature_2m
+          : undefined;
+        const wbgt = calculateWBGT(dryBulbTemp, humidity, windSpeed, solarRad, wetBulb);
 
         let riskLevel: 'EXTREME' | 'VERY_HIGH' | 'HIGH' | 'MODERATE' = 'MODERATE';
         if (dryBulbTemp >= 45.0 || (wbgt >= 33.5 && dryBulbTemp >= 40.0) || apparentTemp >= 48.0) {

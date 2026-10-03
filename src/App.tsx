@@ -24,16 +24,11 @@ import { PushNotificationSettingsModal } from './components/modals/PushNotificat
 import { AdminAuthModal } from './components/modals/AdminAuthModal';
 import { AdminLogoutModal } from './components/modals/AdminLogoutModal';
 import { AiCallAssistantModal } from './components/modals/AiCallAssistantModal';
-import { AiCallAssistantSettingsModal } from './components/modals/AiCallAssistantSettingsModal';
 import { HydrationAlertToast } from './components/HydrationAlertToast';
 import { PushNotificationBanner } from './components/PushNotificationBanner';
 import { HeatwaveDrillBanner } from './components/HeatwaveDrillBanner';
 import { RollingHeadlinesTicker } from './components/RollingHeadlinesTicker';
 import { getTodayDateString, checkAndResetDailyHydration } from './utils/dateUtils';
-import { 
-  loadCallAssistantSettings, 
-  CallAssistantSettings 
-} from './services/aiCallAssistantService';
 import { 
   DRILL_SCENARIOS, 
   DrillScenario, 
@@ -215,45 +210,30 @@ export function App() {
   const [userGpsCoords, setUserGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   // AI Voice Call Assistant State
+  // Strictly automated trigger ONLY when temperature exceeds permissible limit - no manual buttons or settings
   const [isAiCallModalOpen, setIsAiCallModalOpen] = useState<boolean>(false);
-  const [isAiCallSettingsOpen, setIsAiCallSettingsOpen] = useState<boolean>(false);
   const [autoStartAiInCall, setAutoStartAiInCall] = useState<boolean>(false);
-  const [callSettings, setCallSettings] = useState<CallAssistantSettings>(() => loadCallAssistantSettings());
   const lastAutoCallRef = React.useRef<number>(0);
 
-  // Sync settings when modified
-  useEffect(() => {
-    const handleSettingsUpdate = (e: any) => {
-      setCallSettings(e.detail || loadCallAssistantSettings());
-    };
-    window.addEventListener('heatshield_settings_changed', handleSettingsUpdate);
-    return () => window.removeEventListener('heatshield_settings_changed', handleSettingsUpdate);
-  }, []);
-
   // Automated heatwave emergency outbound call trigger
-  // Strictly trigger ONLY when live temperature goes up into genuine danger range (>= 40°C)
+  // Permissible limit: strictly triggers ONLY when live temperature goes above permissible limit (>= 40.0°C or WBGT >= 32.0°C)
   useEffect(() => {
-    if (!callSettings.autoCallEnabled) return;
-
-    const tempThresh = Math.max(40, callSettings.triggerTempThreshold || 40);
-    const wbgtThresh = Math.max(32, callSettings.triggerWbgtThreshold || 32);
-
-    const isSevereHeatwave = 
-      weather.dryBulbTemp >= tempThresh || 
-      (weather.wbgt >= wbgtThresh && weather.dryBulbTemp >= 38) ||
-      (weather.riskLevel === 'EXTREME' && weather.dryBulbTemp >= 40);
+    const isAbovePermissibleLimit = 
+      weather.dryBulbTemp >= 40.0 || 
+      (weather.wbgt >= 32.0 && weather.dryBulbTemp >= 38.0) ||
+      (weather.riskLevel === 'EXTREME' && weather.dryBulbTemp >= 40.0);
 
     const now = Date.now();
-    // 12-minute cooldown between automated outbound safety calls to prevent spam
-    if (isSevereHeatwave && now - lastAutoCallRef.current > 12 * 60 * 1000) {
+    // 10-minute cooldown between automated outbound safety calls to prevent repeated interruption
+    if (isAbovePermissibleLimit && now - lastAutoCallRef.current > 10 * 60 * 1000) {
       lastAutoCallRef.current = now;
       const callTimer = setTimeout(() => {
         setAutoStartAiInCall(false); // Play realistic ringing screen
         setIsAiCallModalOpen(true);
-      }, 2000);
+      }, 1800);
       return () => clearTimeout(callTimer);
     }
-  }, [weather.riskLevel, weather.dryBulbTemp, weather.wbgt, selectedCity.id, callSettings]);
+  }, [weather.riskLevel, weather.dryBulbTemp, weather.wbgt, selectedCity.id]);
 
   // Monitor browser full-screen state
   useEffect(() => {
@@ -492,6 +472,7 @@ export function App() {
         city: selectedCity,
         dryBulbTemp: weather.dryBulbTemp,
         wbgt: weather.wbgt,
+        humidity: weather.humidity,
         heatIndex: weather.heatIndex,
         isDrill: isDrillModeActive,
         scenario: isDrillModeActive ? activeDrillScenario : undefined,
@@ -601,10 +582,6 @@ export function App() {
             onClearNavigationFacility={() => setActiveNavFacility(null)}
             onSelectCity={handleSelectCity}
             language={language}
-            onOpenAiCall={() => {
-              setAutoStartAiInCall(false);
-              setIsAiCallModalOpen(true);
-            }}
           />
         );
       case 'guidance':
@@ -661,10 +638,6 @@ export function App() {
             onLockAdminSession={handleLockAdminSession}
             onOpenCitySelector={() => setIsCitySelectorOpen(true)}
             onTriggerSOS={() => setIsSOSOpen(true)}
-            onOpenAiCall={() => {
-              setAutoStartAiInCall(false);
-              setIsAiCallModalOpen(true);
-            }}
           />
         );
       case 'profile':
@@ -713,12 +686,9 @@ export function App() {
           nationalRiskLevel={weather.riskLevel}
           dryBulbTemp={weather.dryBulbTemp}
           wbgt={weather.wbgt}
+          humidity={weather.humidity}
           onViewSafetyGuidance={() => setCurrentTab('health-guidance')}
           language={language}
-          onTriggerAiCall={() => {
-            setAutoStartAiInCall(false);
-            setIsAiCallModalOpen(true);
-          }}
         />
 
         {/* Top Header */}
@@ -750,11 +720,6 @@ export function App() {
           onToggleDrillMode={handleToggleDrillMode}
           isFullscreen={isFullscreen}
           onToggleFullscreen={handleToggleFullscreen}
-          onOpenAiCall={() => {
-            setAutoStartAiInCall(false);
-            setIsAiCallModalOpen(true);
-          }}
-          onOpenAiCallSettings={() => setIsAiCallSettingsOpen(true)}
         />
 
         {/* Heatwave Emergency Drill Simulation Banner (Demonstration / Judge Mode) */}
@@ -799,11 +764,6 @@ export function App() {
             onLockAdminSession={handleLockAdminSession}
             isDrillModeActive={isDrillModeActive}
             onToggleDrillMode={handleToggleDrillMode}
-            onOpenAiCall={() => {
-              setAutoStartAiInCall(false);
-              setIsAiCallModalOpen(true);
-            }}
-            onOpenAiCallSettings={() => setIsAiCallSettingsOpen(true)}
           />
 
           {/* Dynamic Content Area: fluid edge-to-edge full width without blank white margins */}
@@ -845,10 +805,6 @@ export function App() {
           isAdminAuthenticated={isAdminAuthenticated}
           onOpenAdminAuthModal={() => setIsAdminAuthOpen(true)}
           onLockAdminSession={handleLockAdminSession}
-          onOpenAiCall={() => {
-            setAutoStartAiInCall(false);
-            setIsAiCallModalOpen(true);
-          }}
         />
 
       {/* Admin Authentication & Municipal ID/Password Modal */}
@@ -956,20 +912,6 @@ export function App() {
         userProfile={userProfile}
         language={language}
         autoStartInCall={autoStartAiInCall}
-      />
-
-      {/* AI Call Assistant Settings & Test Call Hub */}
-      <AiCallAssistantSettingsModal
-        isOpen={isAiCallSettingsOpen}
-        onClose={() => setIsAiCallSettingsOpen(false)}
-        city={selectedCity}
-        weather={weather}
-        userProfile={userProfile}
-        language={language}
-        onTriggerTestCall={() => {
-          setAutoStartAiInCall(false); // Play realistic ringing screen
-          setIsAiCallModalOpen(true);
-        }}
       />
 
       </div>

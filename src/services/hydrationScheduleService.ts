@@ -273,10 +273,10 @@ export function calculateWeatherBasedORS(
   lang: LanguageCode = 'en'
 ): WeatherORSRecommendation {
   const isHi = lang === 'hi';
-  const dryBulb = weather.dryBulbTemp || 38;
-  const heatIndex = typeof weather.heatIndex === 'number' && !isNaN(weather.heatIndex) ? weather.heatIndex : 41;
-  const wbgt = weather.wbgt || 31;
-  const sweatRate = weather.sweatLossRate || 550;
+  const dryBulb = weather.dryBulbTemp || 32;
+  const heatIndex = typeof weather.heatIndex === 'number' && !isNaN(weather.heatIndex) ? weather.heatIndex : 34;
+  const wbgt = weather.wbgt ?? 27.5;
+  const sweatRate = weather.sweatLossRate || 450;
 
   // Renal condition guardrail: always restrict ORS if CKD is present
   const isCKD = profile.conditions?.chronicKidney;

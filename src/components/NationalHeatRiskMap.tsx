@@ -116,6 +116,7 @@ export const NationalHeatRiskMap: React.FC<NationalHeatRiskMapProps> = ({
     return cityList.map((city, idx) => {
       const live = batchCitiesWeather?.[city.id];
       const currentTemp = live?.dryBulbTemp ?? city.weather.dryBulbTemp;
+      const currentHumidity = live?.humidity ?? city.weather.humidity ?? 65;
       const currentWbgt = live?.wbgt ?? city.weather.wbgt;
       const currentHeatIndex = live?.heatIndex ?? city.weather.heatIndex ?? (currentTemp + 3.2);
 
@@ -173,6 +174,7 @@ export const NationalHeatRiskMap: React.FC<NationalHeatRiskMapProps> = ({
         lat: city.lat,
         lng: city.lng,
         temp: Number(baseTemp.toFixed(1)),
+        humidity: currentHumidity,
         heatIndex,
         wbgt: Number(baseWbgt.toFixed(1)),
         riskLevel,
@@ -671,6 +673,7 @@ export const NationalHeatRiskMap: React.FC<NationalHeatRiskMapProps> = ({
                         </td>
                         <td className="p-2.5 font-mono">
                           <span className="font-bold text-[#0B1F3A]">{d.temp}°C</span>
+                          <span className="text-[11px] text-[#0284C7] ml-1 font-semibold">💧{Math.round(d.humidity ?? 65)}%</span>
                           <span className="text-[11px] text-[#526273] ml-1">HI {d.heatIndex}°C</span>
                         </td>
                         <td className="p-2.5 font-mono">
@@ -764,6 +767,14 @@ export const NationalHeatRiskMap: React.FC<NationalHeatRiskMapProps> = ({
                     {selectedDistrict.wbgt}°C
                   </span>
                   <span className="text-[11px] text-[#526273] block mt-0.5">Threshold: 31.5°C</span>
+                </div>
+
+                <div className="p-2 rounded bg-[#F5F8FB]">
+                  <span className="text-[10px] text-[#526273] block uppercase">Relative Humidity</span>
+                  <span className="text-base font-bold text-[#0284C7] flex items-center gap-1">
+                    <span>💧</span>{Math.round(selectedDistrict.humidity ?? 65)}% RH
+                  </span>
+                  <span className="text-[11px] text-[#526273] block mt-0.5">Vapor moisture</span>
                 </div>
 
                 <div className="p-2 rounded bg-[#F5F8FB]">

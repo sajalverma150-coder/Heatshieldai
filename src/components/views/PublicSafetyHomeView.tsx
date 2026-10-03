@@ -91,7 +91,7 @@ export const PublicSafetyHomeView: React.FC<PublicSafetyHomeViewProps> = ({
   // Dynamic Live Microclimate Telemetry for Live Readings Strip (WBGT, Heat Index/RH, Solar & UV, Wind Velocity)
   const wbgtVal = React.useMemo(() => {
     if (weather.wbgt && weather.wbgt > 0) return weather.wbgt;
-    return calculateWBGT(weather.dryBulbTemp, weather.humidity, weather.windSpeed, weather.solarRadiation);
+    return calculateWBGT(weather.dryBulbTemp, weather.humidity, weather.windSpeed, weather.solarRadiation, weather.wetBulbTemp);
   }, [weather]);
 
   const wbgtStatus = React.useMemo(() => {
@@ -264,8 +264,8 @@ export const PublicSafetyHomeView: React.FC<PublicSafetyHomeViewProps> = ({
               WBGT: <strong className="text-[#38BDF8]">{weather.wbgt}°C</strong>
             </div>
             <span className="text-[#64748B]">·</span>
-            <div className="text-[#94A3B8]">
-              Humidity: {weather.relativeHumidity}%
+            <div className="text-[#38BDF8] font-bold flex items-center gap-1 bg-[#0284C7]/20 px-2 py-0.5 rounded-lg border border-[#0284C7]/40 shadow-xs">
+              <span>💧</span> {isHindi ? 'आर्द्रता:' : 'Humidity:'} <strong className="text-white">{Math.round(weather.humidity)}% RH</strong>
             </div>
             <button
               onClick={onOpenCitySelector}
@@ -403,13 +403,23 @@ export const PublicSafetyHomeView: React.FC<PublicSafetyHomeViewProps> = ({
               </div>
             </div>
 
-            <div className="my-3 flex items-baseline">
-              <span className="text-2xl sm:text-3xl font-bold text-white font-mono tracking-tight">
-                {weather.heatIndex.toFixed(1)}
-              </span>
-              <span className="text-sm sm:text-base font-normal text-[#8BAAC9] ml-1 font-mono">
-                °C
-              </span>
+            <div className="my-3 flex items-baseline justify-between">
+              <div className="flex items-baseline">
+                <span className="text-2xl sm:text-3xl font-bold text-white font-mono tracking-tight">
+                  {weather.heatIndex.toFixed(1)}
+                </span>
+                <span className="text-sm sm:text-base font-normal text-[#8BAAC9] ml-1 font-mono">
+                  °C
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="text-xl sm:text-2xl font-bold text-[#38BDF8] font-mono">
+                  {Math.round(weather.humidity)}%
+                </span>
+                <span className="text-xs text-[#8BAAC9] ml-1 font-mono">
+                  {isHindi ? 'नमी' : 'RH'}
+                </span>
+              </div>
             </div>
 
             <div className="flex items-end justify-between gap-2 pt-1 border-t border-[#172D4D]/60 mt-auto">

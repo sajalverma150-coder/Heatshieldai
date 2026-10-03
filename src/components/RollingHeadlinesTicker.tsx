@@ -76,11 +76,11 @@ export const RollingHeadlinesTicker: React.FC<RollingHeadlinesTickerProps> = ({
         grapStage: activeCurrentWeather.grapStage,
         headline: isHigh
           ? (isHindi 
-              ? `लाइव टेलीमेट्री: ${activeCurrentWeather.dryBulbTemp}°C • WBGT: ${activeCurrentWeather.wbgt}°C • अग्रिम चेतावनी: आगामी 12:00-16:00 IST में अत्यधिक सौर ताप की संभावना।`
-              : `Live Telemetry: ${activeCurrentWeather.dryBulbTemp}°C • WBGT: ${activeCurrentWeather.wbgt}°C • Forecast Advisory: Peak solar vulnerability expected 12:00–16:00 IST.`)
+              ? `लाइव टेलीमेट्री: ${activeCurrentWeather.dryBulbTemp}°C • आर्द्रता: ${Math.round(activeCurrentWeather.humidity)}% • WBGT: ${activeCurrentWeather.wbgt}°C • अग्रिम चेतावनी: आगामी 12:00-16:00 IST में अत्यधिक सौर ताप की संभावना।`
+              : `Live Telemetry: ${activeCurrentWeather.dryBulbTemp}°C • Humidity: ${Math.round(activeCurrentWeather.humidity)}% • WBGT: ${activeCurrentWeather.wbgt}°C • Forecast Advisory: Peak solar vulnerability expected 12:00–16:00 IST.`)
           : (isHindi 
-              ? `लाइव टेलीमेट्री: ${activeCurrentWeather.dryBulbTemp}°C • WBGT: ${activeCurrentWeather.wbgt}°C • आर्द्रता: ${activeCurrentWeather.humidity}% • सामान्य सुरक्षा दिशानिर्देश सक्रिय।`
-              : `Live Telemetry: ${activeCurrentWeather.dryBulbTemp}°C • WBGT: ${activeCurrentWeather.wbgt}°C • Humidity: ${activeCurrentWeather.humidity}% • Standard biometeorological watch active.`),
+              ? `लाइव टेलीमेट्री: ${activeCurrentWeather.dryBulbTemp}°C • आर्द्रता: ${Math.round(activeCurrentWeather.humidity)}% • WBGT: ${activeCurrentWeather.wbgt}°C • सामान्य सुरक्षा दिशानिर्देश सक्रिय।`
+              : `Live Telemetry: ${activeCurrentWeather.dryBulbTemp}°C • Humidity: ${Math.round(activeCurrentWeather.humidity)}% • WBGT: ${activeCurrentWeather.wbgt}°C • Standard biometeorological watch active.`),
         updateTime: `Live • ${timeStr} IST`,
       });
     }
@@ -96,6 +96,7 @@ export const RollingHeadlinesTicker: React.FC<RollingHeadlinesTickerProps> = ({
 
       const live = citiesLiveWeather?.[cityKey];
       const temp = live ? live.dryBulbTemp : matchedCity.weather.dryBulbTemp;
+      const humidity = live ? live.humidity : matchedCity.weather.humidity;
       const wbgt = live ? live.wbgt : matchedCity.weather.wbgt;
       const heatIndex = live ? live.heatIndex : (matchedCity.weather.heatIndex ?? temp + 3);
       const riskLevel = live ? live.riskLevel : matchedCity.weather.riskLevel;
@@ -103,16 +104,16 @@ export const RollingHeadlinesTicker: React.FC<RollingHeadlinesTickerProps> = ({
       let forecastText = '';
       if (temp >= 42 || wbgt >= 32) {
         forecastText = isHindi 
-          ? `चेतावनी: तापमान ${temp}°C (WBGT ${wbgt}°C) • आगामी 24 घंटे में तीव्र ताप लहर की संभावना।`
-          : `Forecast Alert: ${matchedCity.name} at ${temp}°C (WBGT ${wbgt}°C) • Elevated heat stress forecast for the next 24-48h window.`;
+          ? `चेतावनी: ${matchedCity.name} पर तापमान ${temp}°C • आर्द्रता ${Math.round(humidity)}% • WBGT ${wbgt}°C • आगामी 24 घंटे में तीव्र ताप लहर की संभावना।`
+          : `Forecast Alert: ${matchedCity.name} at ${temp}°C • Humidity ${Math.round(humidity)}% • WBGT ${wbgt}°C • Elevated heat stress forecast for the next 24-48h window.`;
       } else if (temp >= 38 || wbgt >= 29) {
         forecastText = isHindi 
-          ? `मौसम अवलोकन: तापमान ${temp}°C • दोपहर में सौर ताप वृद्धि का पूर्वानुमान • हाइड्रेशन अलर्ट सक्रिय।`
-          : `Thermal Outlook: ${matchedCity.name} at ${temp}°C • Afternoon heat index surge expected • Hydration watch active.`;
+          ? `मौसम अवलोकन: ${matchedCity.name} पर तापमान ${temp}°C • आर्द्रता ${Math.round(humidity)}% • दोपहर में सौर ताप वृद्धि का पूर्वानुमान • हाइड्रेशन अलर्ट सक्रिय।`
+          : `Thermal Outlook: ${matchedCity.name} at ${temp}°C • Humidity ${Math.round(humidity)}% • Afternoon heat index surge expected • Hydration watch active.`;
       } else {
         forecastText = isHindi 
-          ? `मौसम स्थिति: ${matchedCity.name} पर तापमान ${temp}°C • सामान्य बायो-क्लाइमेट स्थितियां प्रचलित।`
-          : `Station Status: ${matchedCity.name} at ${temp}°C (WBGT ${wbgt}°C) • Normal biometeorological conditions prevailing.`;
+          ? `मौसम स्थिति: ${matchedCity.name} पर तापमान ${temp}°C • आर्द्रता ${Math.round(humidity)}% • WBGT ${wbgt}°C • सामान्य बायो-क्लाइमेट स्थितियां प्रचलित।`
+          : `Station Status: ${matchedCity.name} at ${temp}°C • Humidity ${Math.round(humidity)}% • WBGT ${wbgt}°C • Normal biometeorological conditions prevailing.`;
       }
 
       list.push({

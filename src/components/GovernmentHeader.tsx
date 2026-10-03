@@ -43,8 +43,6 @@ export interface GovernmentHeaderProps {
   onToggleDrillMode?: () => void;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
-  onOpenAiCall?: () => void;
-  onOpenAiCallSettings?: () => void;
 }
 
 export const GovernmentHeader: React.FC<GovernmentHeaderProps> = ({
@@ -65,8 +63,6 @@ export const GovernmentHeader: React.FC<GovernmentHeaderProps> = ({
   onToggleDrillMode,
   isFullscreen = false,
   onToggleFullscreen,
-  onOpenAiCall,
-  onOpenAiCallSettings,
 }) => {
   const [isEmergencyDropdownOpen, setIsEmergencyDropdownOpen] = useState(false);
   const emergencyRef = useRef<HTMLDivElement>(null);
@@ -136,31 +132,6 @@ export const GovernmentHeader: React.FC<GovernmentHeaderProps> = ({
               <Eye className="w-3 h-3" />
               <span>{isHindi ? 'कंट्रास्ट' : 'Contrast'}</span>
             </button>
-
-            {/* AI Call Assistant Auto-Active Button */}
-            {onOpenAiCall && (
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={onOpenAiCall}
-                  className="flex items-center gap-1.5 text-[11px] sm:text-xs font-mono font-bold px-2 sm:px-2.5 py-0.5 rounded bg-gradient-to-r from-[#0284C7] to-[#2563EB] hover:from-[#0369A1] hover:to-[#1D4ED8] text-white shadow-xs transition-transform active:scale-95 cursor-pointer"
-                  title={isHindi ? 'एआई आपातकालीन कॉल सहायक (अस्पताल/शीतलन केंद्र आरक्षण)' : 'AI Heatwave Safety Call Assistant (Hospital/Shelter/Tanker IVR)'}
-                >
-                  <span className="w-2 h-2 rounded-full bg-[#4ADE80] animate-pulse" />
-                  <PhoneCall className="w-3 h-3 text-[#E0F2FE]" />
-                  <span className="hidden md:inline">{isHindi ? 'एआई कॉल सहायक' : 'AI Call Assistant'}</span>
-                  <span className="md:hidden">{isHindi ? 'कॉल' : 'AI Call'}</span>
-                </button>
-                {onOpenAiCallSettings && (
-                  <button
-                    onClick={onOpenAiCallSettings}
-                    className="p-1 rounded text-[#94A3B8] hover:text-white bg-[#0A1D36] border border-[#1E4373] hover:bg-[#135A9C] cursor-pointer"
-                    title={isHindi ? 'कॉल सेटिंग्स' : 'Call Settings'}
-                  >
-                    <Radio className="w-3 h-3 text-[#38BDF8]" />
-                  </button>
-                )}
-              </div>
-            )}
 
             {/* Emergency Helpline Numbers Link */}
             <div className="relative" ref={emergencyRef}>
@@ -326,6 +297,9 @@ export const GovernmentHeader: React.FC<GovernmentHeaderProps> = ({
             </span>
             <span className="font-mono font-bold bg-[#135A9C] px-2 py-0.5 rounded text-white text-[11px] shadow-xs">
               {weather.dryBulbTemp}°C
+            </span>
+            <span className="text-[11px] text-[#7DD3FC] font-mono font-bold flex items-center gap-0.5">
+              <span>💧</span>{Math.round(weather.humidity)}% RH
             </span>
             <span className="text-[11px] text-[#93C5FD] font-mono hidden md:inline font-medium">
               WBGT {weather.wbgt}°C
